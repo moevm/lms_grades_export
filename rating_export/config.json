@@ -1,0 +1,20 @@
+{
+    "google": {
+        "credentials_file": "credentials.json"
+    },
+    "export": [
+        {
+            "spreadsheet_key": "table_id",
+            "worksheet_name": "Информатика",
+            "outdir_path": "./html/grade/first_course/",
+            "subject": "Информатика",
+            "common_columns": {
+                "name": "ФИО",
+                "login": "Логин на e.moevm.info",
+                "group": "Группа"
+            },
+            "header_row": 2,
+            "published_columns": ["G:I", "O:Q", "T:V"]
+        }
+    ]
+}
