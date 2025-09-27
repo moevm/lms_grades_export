@@ -38,7 +38,7 @@ function exportCourses() {
                     --csv_path grades --google_token conf.json \
                     --course_id ${current_export[4]} \
                     --table_id ${current_export[1]} \
-                    --sheet_name ${current_export[2]} \
+                    --sheet_name "${current_export[2]}" \
                     --options github >> $log_file
 
                 return_code=$?
@@ -51,7 +51,7 @@ function exportCourses() {
                     --course_id ${current_export[4]} \
                     --class_id ${current_export[5]} \
                     --table_id ${current_export[1]} \
-                    --sheet_name ${current_export[2]} >> $log_file
+                    --sheet_name "${current_export[2]}" >> $log_file
 
                 return_code=$?
                 ;;
@@ -60,7 +60,7 @@ function exportCourses() {
                     --checker_filter "${current_export[4]}" \
                     --checker_token $DIS_ACCESS_TOKEN \
                     --table_id ${current_export[1]} \
-                    --sheet_name ${current_export[2]} >> $log_file
+                    --sheet_name "${current_export[2]}" >> $log_file
 
                 return_code=$?
                 ;;
