@@ -11,7 +11,6 @@
 # exportCourses "${exports[@]}"
 
 
-source ./download_file.sh
 
 is_error=0
 
