@@ -50,8 +50,8 @@ class DiskManager:
         Returns:
             str: publish link to file
         """
-        result = self.client.publish(remote_path, allow_address_access=True)#, public_settings=yadisk.types.PublicSettings(read_only=True))
-        publish_link = result.href
+        self.client.publish(remote_path)
+        publish_link = self.client.get_meta(remote_path).public_url
         print(f"{remote_path} link: {publish_link}")
         return publish_link
 
