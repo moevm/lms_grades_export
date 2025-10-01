@@ -1,6 +1,7 @@
 import argparse
 import gspread
 import requests
+from pathlib import Path
 from gspread.utils import ExportFormat
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
@@ -37,7 +38,9 @@ def download_sheet(
         )
 
         if response.status_code == 200:
-            with open(f"{filename}.{export_format}", "wb") as f:
+            new_filepath = Path(f"{filename}.{export_format}")
+            new_filepath.parents[0].mkdir(parents=True, exist_ok=True)
+            with open(new_filepath, "wb") as f:
                 f.write(response.content)
             print(f"Файл сохранен как: {filename}.{export_format}")
         else:
