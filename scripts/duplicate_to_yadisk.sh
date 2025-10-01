@@ -5,10 +5,7 @@
 # exports=(
 #   'humanreadable_subject,table_id,sheet_id,export_format,export_name'
 # )
-# YADISK_TOKEN=... YADISK_TDIR=... duplicateToYadisk "${exports[@]}"
-
-
-source ./download_file.sh
+# YADISK_TOKEN=... YADISK_TDIR=... GOOGLE_CRED=... duplicateToYadisk "${exports[@]}"
 
 
 function duplicateSheetsToYadisk() {
@@ -26,13 +23,12 @@ function duplicateSheetsToYadisk() {
         info_msg=">>>>> Экспорт для дисциплины ${current_export[0]} из таблицы ${current_export[1]}, лист ${current_export[2]} в ${current_export[4]} (формат ${current_export[3]})"
         echo $info_msg
         echo $info_msg >> $log_file
-
+        
         # export to file
-        download_sheet ${current_export[1]} ${current_export[2]} "${current_export[4]}" ${current_export[3]}
+        python3 download_file.py --table_id "${current_export[1]}" --sheet_id "${current_export[2]}" --google_cred "$GOOGLE_CRED" --format ${current_export[3]} --filename "${current_export[4]}" 
 
         # upload file
         YADISK_TOKEN=$YADISK_TOKEN python3 -c "import yadisk_manager; yadisk_manager.upload_file_to_disk(file_path='${current_export[4]}.${current_export[3]}', abs_disk_path='$YADISK_TDIR')" 
-
         
         end_info_msg=">>>>> Конец экспорта для дисциплины"
         echo $end_info_msg

@@ -42,7 +42,7 @@ def download_sheet(
             new_filepath.parents[0].mkdir(parents=True, exist_ok=True)
             with open(new_filepath, "wb") as f:
                 f.write(response.content)
-            print(f"Файл сохранен как: {filename}.{export_format}")
+            print(f"Файл сохранен как: {new_filepath}")
         else:
             print(f"Ошибка {response.status_code}: {response.text}")
 
