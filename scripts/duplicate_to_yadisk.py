@@ -49,6 +49,7 @@ class Exporter:
         self.yadisk_dir = yadisk_dir
         self.disk_manager = DiskManager(token=yadisk_token)
         self.results = [["filename", "public_link"]]
+        self.has_errors = False
 
     def process(self):
         """
@@ -81,12 +82,15 @@ class Exporter:
                 except Exception as e:
                     logger.error(f"!!!!! Ошибка при экспорте дисциплины {subject}: {e}")
                     self.results.append([export_line["export_name"], "- (error)"])
+                    self.has_errors = True
                 finally:
                     logger.info(f">>>>> Конец экспорта для дисциплины {subject}")
 
             self.write_export_result()
+            return not self.has_errors
         else:
             logger.error("Ошибка получения данных для экспорта")
+            return False
 
     def process_export(
         self,
@@ -183,4 +187,5 @@ if __name__ == "__main__":
         yadisk_dir=args.yadisk_dir,
     )
 
-    exporter.process()
+    if not exporter.process():
+        exit(1)
