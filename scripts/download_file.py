@@ -2,7 +2,6 @@ import argparse
 import gspread
 import logging
 import requests
-from io import StringIO
 from pathlib import Path
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
@@ -26,12 +25,12 @@ def get_sheets_service_and_token(credentials_file="credentials.json"):
 
 def download_sheet(
     table_id,
-    sheet_id=0,
+    sheet_id="0",
     filename="export",
     export_format="pdf",
     google_cred="credentials.json",
     write_to_file=True,
-) -> StringIO | None:
+) -> bytes | None:
     try:
         _, access_token = get_sheets_service_and_token(google_cred)
 
@@ -49,7 +48,7 @@ def download_sheet(
                 with open(new_filepath, "wb") as f:
                     f.write(content)
                 logger.debug(f"download_sheet. Файл сохранен как: {new_filepath}")
-            return StringIO(content.decode("utf-8"))
+            return content
         else:
             logger.error(f"Ошибка {response.status_code}: {response.text}")
 
@@ -61,7 +60,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Download Google Sheets")
     parser.add_argument("--table_id", required=True, help="Google Sheets table ID")
     parser.add_argument(
-        "--sheet_id", required=True, default=0, type=int, help="Sheet ID (default: 0)"
+        "--sheet_id", required=True, default="0", type=str, help="Sheet ID (default: 0)"
     )
     parser.add_argument(
         "--format", choices=["csv", "pdf", "xlsx"], default="csv", help="Output format"

@@ -6,21 +6,21 @@
 
 import argparse
 import csv
-
-# import sys
+from io import StringIO
 import logging
+import sys
+from pathlib import Path
 from download_file import download_sheet, get_sheets_service_and_token
 from yadisk_manager import DiskManager
 
 
-# logging.basicConfig(
-#    level=logging.INFO,
-#    format="%(asctime)s - %(levelname)s - %(message)s",
-#    handlers=[
-#        logging.FileHandler("duplicate_sheets.log", mode="w", encoding="utf-8"),
-#        logging.StreamHandler(sys.stdout),
-#    ],
-# )
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+    ],
+)
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +28,7 @@ class Exporter:
     def __init__(
         self,
         table_id: str,
-        sheet_id: int,
+        sheet_id: str,
         google_cred: str,
         yadisk_token: str,
         yadisk_dir: str,
@@ -63,6 +63,7 @@ class Exporter:
             write_to_file=False,
         )
         if export_content:
+            export_content = StringIO(export_content.decode("utf-8"))
             export_data = csv.DictReader(
                 export_content,
                 fieldnames=[
@@ -75,6 +76,9 @@ class Exporter:
             )
             for export_line in export_data:
                 subject = export_line.pop("subject")
+                filepath = (
+                    f"{export_line['export_name']}.{export_line['export_format']}"
+                )
                 try:
                     logger.info(f">>>>> Экспорт для дисциплины {subject}")
                     link = self.process_export(**export_line)
@@ -85,6 +89,7 @@ class Exporter:
                     self.has_errors = True
                 finally:
                     logger.info(f">>>>> Конец экспорта для дисциплины {subject}")
+                    Path(filepath).unlink(missing_ok=True)  # remove from host
 
             self.write_export_result()
             return not self.has_errors
@@ -104,14 +109,9 @@ class Exporter:
 
         Args: данные строки из таблицы
         """
-        if sheet_id.isdecimal():
-            int_sheet_id = int(sheet_id)
-        else:
-            raise Exception(f"process_export: sheet_id={sheet_id} is'not int")
-
         export_success = download_sheet(
             table_id=table_id,
-            sheet_id=int_sheet_id,
+            sheet_id=sheet_id,
             export_format=export_format,
             filename=export_name,
             google_cred=self.google_cred,
