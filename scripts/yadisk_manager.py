@@ -7,14 +7,16 @@ from logging import getLogger
 import yadisk
 
 
-logger = getLogger("root")
+logger = getLogger(__name__)
 
 
 class DiskManager:
     """Light YaDisk manager"""
 
-    def __init__(self, download_path="./"):
-        self.client = yadisk.Client(token=environ.get("YADISK_TOKEN"))
+    def __init__(self, token=None, download_path="./"):
+        if not token:
+            token = environ.get("YADISK_TOKEN", "")
+        self.client = yadisk.Client(token=token)
         self.download_path = download_path
 
     def upload(self, local_path: str, disk_path: str, overwrite=True):
@@ -52,28 +54,4 @@ class DiskManager:
         """
         self.client.publish(remote_path)
         publish_link = self.client.get_meta(remote_path).public_url
-        print(f"{remote_path} link: {publish_link}")
         return publish_link
-
-
-def upload_file_to_disk(
-    file_path: str,
-    abs_disk_path="/Учебные дисциплины - таблицы и формы",
-    overwrite=True,
-    publish=True,
-):
-    """hardcoded logic for uploading rating file to yadisk in pdf format
-    might be run from bash
-
-    Args:
-        file_path (str): path to local file
-        abs_disk_path (str, optional): full path to file on yadisk.
-            Defaults to "/Учебные дисциплины - таблицы и формы".
-        overwrite (bool): overwrite file. Defaults to true
-
-    """
-    full_path = f"{abs_disk_path}/{file_path}"
-    disk_manager = DiskManager()
-    disk_manager.upload(file_path, full_path, overwrite=overwrite)
-    if publish:
-        disk_manager.publish_file(full_path)

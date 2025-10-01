@@ -1,10 +1,13 @@
 import argparse
 import gspread
+import logging
 import requests
+from io import StringIO
 from pathlib import Path
-from gspread.utils import ExportFormat
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
+
+logger = logging.getLogger(__name__)
 
 
 def get_sheets_service_and_token(credentials_file="credentials.json"):
@@ -27,7 +30,8 @@ def download_sheet(
     filename="export",
     export_format="pdf",
     google_cred="credentials.json",
-):
+    write_to_file=True,
+) -> StringIO | None:
     try:
         _, access_token = get_sheets_service_and_token(google_cred)
 
@@ -38,19 +42,22 @@ def download_sheet(
         )
 
         if response.status_code == 200:
-            new_filepath = Path(f"{filename}.{export_format}")
-            new_filepath.parents[0].mkdir(parents=True, exist_ok=True)
-            with open(new_filepath, "wb") as f:
-                f.write(response.content)
-            print(f"Файл сохранен как: {new_filepath}")
+            content = response.content
+            if write_to_file:
+                new_filepath = Path(f"{filename}.{export_format}")
+                new_filepath.parents[0].mkdir(parents=True, exist_ok=True)
+                with open(new_filepath, "wb") as f:
+                    f.write(content)
+                logger.debug(f"download_sheet. Файл сохранен как: {new_filepath}")
+            return StringIO(content.decode("utf-8"))
         else:
-            print(f"Ошибка {response.status_code}: {response.text}")
+            logger.error(f"Ошибка {response.status_code}: {response.text}")
 
     except Exception as e:
-        print(f"Ошибка при скачивании: {e}")
+        logger.error(f"Ошибка при скачивании: {e}")
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(description="Download Google Sheets")
     parser.add_argument("--table_id", required=True, help="Google Sheets table ID")
     parser.add_argument(
@@ -64,7 +71,11 @@ def main():
     )
     parser.add_argument("--google_cred", help="Path to google credentials file")
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
 
     download_sheet(
         args.table_id, args.sheet_id, args.filename, args.format, args.google_cred
