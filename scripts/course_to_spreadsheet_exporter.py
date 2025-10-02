@@ -47,7 +47,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
             raise ValueError(f"Нет валидных систем в данных: {system_cred.keys()}")
         return {key: system_cred[key] for key in valid_systems}
 
-    def proccess(self) -> bool:
+    def process(self) -> bool:
         control_data = self.get_control_data()
 
         if control_data:
@@ -208,12 +208,12 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    duplicator = CourseToSpreadheetExporter(
+    exporter = CourseToSpreadheetExporter(
         table_id=args.table_id,
         sheet_id=args.sheet_id,
         google_cred=args.google_cred,
         system_cred_path=args.system_cred,
     )
 
-    if not duplicator.process():
+    if not exporter.process():
         exit(1)
