@@ -10,6 +10,7 @@ from io import StringIO
 import logging
 import sys
 from pathlib import Path
+from base_class import BaseGoogleSpreadsheetDataProcessor
 from download_file import download_sheet, get_sheets_service_and_token
 from yadisk_manager import DiskManager
 
@@ -24,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class SpreadheetToYaDiskDuplicator:
+class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
     def __init__(
         self,
         table_id: str,
@@ -43,29 +44,20 @@ class SpreadheetToYaDiskDuplicator:
             yadisk_token (str): OAuth-токен Яндекс.Диска
             yadisk_dir (str): Целевая директория на Яндекс.Диске
         """
-        self.table_id = table_id
-        self.sheet_id = sheet_id
-        self.google_cred = google_cred
+        super().__init__(table_id=table_id, sheet_id=sheet_id, google_cred=google_cred)
         self.yadisk_dir = yadisk_dir
         self.disk_manager = DiskManager(token=yadisk_token)
         self.results = [["filename", "public_link"]]
-        self.has_errors = False
 
     def process(self):
         """
         Обрабатывает данные экспорта
         """
-        export_content = download_sheet(
-            table_id=self.table_id,
-            sheet_id=self.sheet_id,
-            google_cred=self.google_cred,
-            export_format="csv",
-            write_to_file=False,
-        )
-        if export_content:
-            export_content = StringIO(export_content.decode("utf-8"))
-            export_data = csv.DictReader(
-                export_content,
+        control_data = self.get_control_data()
+
+        if control_data:
+            control_data = csv.DictReader(
+                control_data,
                 fieldnames=[
                     "subject",
                     "table_id",
@@ -74,30 +66,30 @@ class SpreadheetToYaDiskDuplicator:
                     "export_name",
                 ],
             )
-            for export_line in export_data:
+            for export_line in control_data:
                 subject = export_line.pop("subject")
                 filepath = (
                     f"{export_line['export_name']}.{export_line['export_format']}"
                 )
                 try:
                     logger.info(f">>>>> Экспорт для дисциплины {subject}")
-                    link = self.process_export(**export_line)
+                    link = self.process_data(**export_line)
                     self.results.append([export_line["export_name"], link])
                 except Exception as e:
                     logger.error(f"!!!!! Ошибка при экспорте дисциплины {subject}: {e}")
                     self.results.append([export_line["export_name"], "- (error)"])
-                    self.has_errors = True
+                    self.set_errors_flag()
                 finally:
                     logger.info(f">>>>> Конец экспорта для дисциплины {subject}")
                     Path(filepath).unlink(missing_ok=True)  # remove from host
 
-            self.write_export_result()
-            return not self.has_errors
+            self.write_process_result()
+            return self.check_errors()
         else:
             logger.error("Ошибка получения данных для экспорта")
             return False
 
-    def process_export(
+    def process_data(
         self,
         table_id: str,
         sheet_id: str,
@@ -105,7 +97,7 @@ class SpreadheetToYaDiskDuplicator:
         export_format: str,
     ) -> str:
         """
-        Экспортирует один лист дисциплины
+        Обрабатывает одну строку управляющей таблицы
 
         Args: данные строки из таблицы
         """
@@ -136,20 +128,6 @@ class SpreadheetToYaDiskDuplicator:
         full_path = f"{self.yadisk_dir}/{file_path}"
         self.disk_manager.upload(file_path, full_path)
         return self.disk_manager.publish_file(full_path)
-
-    def write_export_result(self):
-        client, _ = get_sheets_service_and_token(self.google_cred)
-        sh = client.open_by_key(self.table_id)
-
-        sheet_title = f"result_{sh.get_worksheet_by_id(self.sheet_id).title}"
-
-        try:
-            ws = sh.worksheet(sheet_title)
-            ws.clear()
-        except:
-            ws = sh.add_worksheet(title=sheet_title, rows=100, cols=2)
-
-        ws.append_rows(self.results)
 
 
 def parse_args():
