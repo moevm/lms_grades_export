@@ -73,7 +73,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
                         self.results.append(
                             [
                                 subject,
-                                f"https://docs.google.com/spreadsheets/d/1oE{export_line['table_id']}/edit?gid={export_line['sheet_id']}",
+                                f"https://docs.google.com/spreadsheets/d/{export_line['table_id']}/edit?gid={export_line['sheet_id']}",
                             ]
                         )
                 except Exception as e:
