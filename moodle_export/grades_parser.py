@@ -153,17 +153,19 @@ class Main:
                         elif i == len(cls.args.table_id) - 1:
                             table_id = cls.args.table_id[i]
 
-                    if cls.args.sheet_name:
-                        for i in range(0, len(cls.args.sheet_name)):
-                            if cls.args.course_id[i] == course_id:
-                                sheet_name = cls.args.sheet_name[i]
-                                break
-                            else:
-                                sheet_name = cls.args.sheet_name[i] + ' ' + course_id
+                    if cls.args.sheet_id:
+                        sheets.write_data_to_table(df, cls.args.google_token, table_id, sheet_id=cls.args.sheet_id)
                     else:
-                        sheet_name = 'course ' + course_id
-
-                    sheets.write_data_to_table(df, cls.args.google_token, table_id, sheet_name)
+                        if cls.args.sheet_name:
+                            for i in range(0, len(cls.args.sheet_name)):
+                                    if cls.args.course_id[i] == course_id:
+                                        sheet_name = cls.args.sheet_name[i]
+                                        break
+                                    else:
+                                        sheet_name = cls.args.sheet_name[i] + ' ' + course_id
+                        else:
+                            sheet_name = 'course ' + course_id
+                        sheets.write_data_to_table(df, cls.args.google_token, table_id, sheet_name=sheet_name)
                 
                 # write data to yandex disk
                 if cls.args.yandex_token and cls.args.yandex_path:

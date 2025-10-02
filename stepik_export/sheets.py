@@ -10,17 +10,20 @@ INT_MASS = [{
 }]
 
 
-def write_data_to_table(csv_path, google_token, table_id, sheet_name):
-    if google_token and sheet_name and table_id:
+def write_data_to_table(csv_path, google_token, table_id, sheet_name=None, sheet_id=None):
+    if google_token and (sheet_id or sheet_name) and table_id:
         gc = pygsheets.authorize(service_file=google_token)
         sh = gc.open_by_key(table_id)
 
-    try:
-        sh.worksheets('title', sheet_name)
-    except:
-        sh.add_worksheet(sheet_name)
+    if sheet_id:
+        wk_content = sh.worksheet_by_id(sheet_id)
+    else:
+        try:
+            sh.worksheets('title', sheet_name)
+        except:
+            sh.add_worksheet(sheet_name)
 
-    wk_content = sh.worksheet_by_title(sheet_name)
+        wk_content = sh.worksheet_by_title(sheet_name)
 
     if csv_path:
         df = pd.read_csv(csv_path)

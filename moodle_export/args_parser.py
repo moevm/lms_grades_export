@@ -10,6 +10,7 @@ def arg_parser():
     parser.add_argument('--google_token', type=str, required=False, help='Specify path to google token file')
     parser.add_argument('--table_id', type=lambda s: [i for i in s.split(',')], required=False, help='Specify Google sheet document id (can find in url)')
     parser.add_argument('--sheet_name', type=lambda s: [i for i in s.split(',')], required=False, help='Specify title for a sheet in a document in which data will be printed')
+    parser.add_argument('--sheet_id', type=lambda s: [i for i in s.split(',')], required=False, help='Specify ID for a sheet in a document in which data will be printed. If set, sheet_name is ignored')
     parser.add_argument('--yandex_token', type=str, required=False, help='Specify Yandex token from https://oauth.yandex.ru/client/new application')
     parser.add_argument('--yandex_path', type=str, required=False, help='Specify output filename on Yandex Disk')
     parser.add_argument('--percentages', required=False, action='store_true', help='If set then grades will be printed as percentages')
