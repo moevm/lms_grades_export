@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class Exporter:
+class SpreadheetToYaDiskDuplicator:
     def __init__(
         self,
         table_id: str,
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
     args = parse_args()
 
-    exporter = Exporter(
+    duplicator = SpreadheetToYaDiskDuplicator(
         table_id=args.table_id,
         sheet_id=args.sheet_id,
         google_cred=args.google_cred,
@@ -187,5 +187,5 @@ if __name__ == "__main__":
         yadisk_dir=args.yadisk_dir,
     )
 
-    if not exporter.process():
+    if not duplicator.process():
         exit(1)
