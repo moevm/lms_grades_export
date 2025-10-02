@@ -137,13 +137,14 @@ def main():
         print('Send data to Google Sheets')
         if args.sheet_id:
             sheets.write_data_to_table(csv_path, args.google_token, args.table_id, sheet_id=args.sheet_id)
+            print(f'Check data in your table! List id is: {args.sheet_id}')
         else:
             if args.sheet_name:
                 sheet_name = args.sheet_name
             else:
                 sheet_name = 'course ' + args.course_id
             sheets.write_data_to_table(csv_path, args.google_token, args.table_id, sheet_name=sheet_name)
-        print(f'Check data in your table! List name is: {sheet_name}')
+            print(f'Check data in your table! List name is: {sheet_name}')
         print('********************************************************')
     
     # write data to yandex disk
