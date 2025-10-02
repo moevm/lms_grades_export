@@ -1,7 +1,8 @@
+import argparse
 import csv
 import subprocess
-import os
 import sys
+from json import load as json_load
 import logging
 from pathlib import Path
 from base_class import BaseGoogleSpreadsheetDataProcessor
@@ -19,12 +20,19 @@ logger = logging.getLogger(__name__)
 class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
 
     def __init__(
-        self, table_id: str, sheet_id: str, google_cred: str, system_cred: dict
+        self, table_id: str, sheet_id: str, google_cred: str, system_cred_path: str
     ):
         super().__init__(table_id, sheet_id, google_cred)
         self.systems = {"moodle", "dis", "stepik"}
-        self.system_cred = self.validate_system_credentials(system_cred)
+        self.system_cred = self.validate_system_credentials(
+            self.load_system_creds(system_cred_path)
+        )
         self.results = [["subject", "table_link"]]
+
+    @staticmethod
+    def load_system_creds(path: str) -> dict:
+        with open(path, encoding="utf-8") as file:
+            return json_load(file)
 
     def validate_system_credentials(self, system_cred: dict) -> dict:
         # TODO: real validation?
@@ -176,3 +184,36 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
             ],
         }
         return CMD[system]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Download Admin Google Sheets with duplicate info"
+    )
+    parser.add_argument("--table_id", required=True, help="Google Sheets table ID")
+    parser.add_argument(
+        "--sheet_id", required=True, default=0, type=int, help="Sheet ID (default: 0)"
+    )
+    parser.add_argument(
+        "--google_cred", required=True, help="Path to google credentials file"
+    )
+    parser.add_argument(
+        "--system_cred",
+        required=True,
+        help="Path to system (moodle/stepik/dis) credentials file",
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    duplicator = CourseToSpreadheetExporter(
+        table_id=args.table_id,
+        sheet_id=args.sheet_id,
+        google_cred=args.google_cred,
+        system_cred_path=args.system_cred,
+    )
+
+    if not duplicator.process():
+        exit(1)

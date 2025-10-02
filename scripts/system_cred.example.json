@@ -1,0 +1,8 @@
+{
+    "moodle": "token",
+    "dis": "access_token",
+    "stepik": {
+        "client_id": "client_id",
+        "client_secret": "client_secret"
+    }
+}
