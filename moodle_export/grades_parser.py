@@ -154,7 +154,7 @@ class Main:
                             table_id = cls.args.table_id[i]
 
                     if cls.args.sheet_id:
-                        sheets.write_data_to_table(df, cls.args.google_token, table_id, sheet_id=cls.args.sheet_id)
+                        sheets.write_data_to_table(df, cls.args.google_token, table_id, sheet_id=cls.args.sheet_id[0])
                     else:
                         if cls.args.sheet_name:
                             for i in range(0, len(cls.args.sheet_name)):
