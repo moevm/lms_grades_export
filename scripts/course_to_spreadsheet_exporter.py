@@ -8,7 +8,7 @@ from pathlib import Path
 from base_class import BaseGoogleSpreadsheetDataProcessor
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
@@ -66,18 +66,17 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 subject = export_line.pop("subject")
                 try:
                     logger.info(f">>>>> Экспорт для дисциплины {subject}")
-                    returncode = self.process_data(**export_line)
-                    if returncode:
-                        self.results.append([subject, "- (error)"])
-                    else:
-                        self.results.append(
-                            [
-                                subject,
-                                f"https://docs.google.com/spreadsheets/d/{export_line['table_id']}/edit?gid={export_line['sheet_id']}",
-                            ]
-                        )
+                    is_ok = self.process_data(**export_line)
+                    self.results.append(
+                        [
+                            subject,
+                            f"https://docs.google.com/spreadsheets/d/{export_line['table_id']}/edit?gid={export_line['sheet_id']}",
+                        ]
+                        if is_ok
+                        else [subject, "- (error)"]
+                    )
                 except Exception as e:
-                    logger.error(f"!!!!! Ошибка при экспорте дисциплины {subject}: {e}")
+                    logger.info(f"!!!!! Ошибка при экспорте дисциплины {subject}: {e}")
                     self.results.append([subject, "- (error)"])
                     self.set_errors_flag()
                 finally:
@@ -112,9 +111,9 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
         docker_run_cmd = self.create_docker_run_cmd(system, **export_info)
         result = subprocess.run(docker_run_cmd, capture_output=True, text=True)
         if result.stdout:
-            logger.info(result.stdout)
+            logger.info(f"docker stdout: '''{result.stdout}'''")
         if result.stderr:
-            logger.error(result.stderr)
+            logger.error(f"docker stderr: '''{result.stderr}'''")
         return result.returncode == 0
 
     def create_docker_run_cmd(
@@ -124,6 +123,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
         Формирует полную команду запуска docker run
         """
         cmd = ["docker", "run", "--rm", "-v", f"{self.google_cred}:/app/conf.json"]
+        cmd.extend(["--name", f"{system}_exporter"])
         cmd.extend(self.get_extended_system_docker_command(system, **export_info))
         cmd.extend(
             [
@@ -178,7 +178,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
             "dis": [
                 "checker_export_parser:latest",
                 "--checker_filter",
-                f'"{main_export_info}"',
+                main_export_info,
                 "--checker_token",
                 self.system_cred["dis"],
             ],

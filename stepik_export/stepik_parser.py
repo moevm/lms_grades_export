@@ -5,6 +5,9 @@ import json
 import requests
 import csv
 import yadisk
+import logging
+import sys
+
 
 ALL_TASK_IDS = set()
 
@@ -49,7 +52,7 @@ def parse_grades(user, url, token, sorted_steps):
     if user['results']:
         lesson = list(user['results'].keys())[0].split('-')[0]
     else:
-        print("No results for user ", user['id'])
+        #print("No results for user ", user['id'])
         lesson = []
 
     if sorted_steps == []:
@@ -79,8 +82,8 @@ def main():
         print('Unable to authorize with provided credentials')
         exit(1)
     else:
-        print('********************************************************')
-        print(f'Authorization valid')
+        #logger.debug('********************************************************')
+        print(f'stepik_export: Authorization valid')
 
     # get grades data
     if args.class_id:
@@ -96,12 +99,12 @@ def main():
     all_task_id = set()
     while True:
         if course_grades['course-grades']:
-            print(f'Parse {page} page')
+            #print(f'Parse {page} page')
             for user in course_grades['course-grades']:
                 grades = parse_grades(user, args.url, token, sorted_steps)
                 grades_for_table.append(grades)
                 all_task_id.update(grades.keys())    # save all task id from student
-            print('Parsed!')
+            #print('Parsed!')
 
             if course_grades['meta']['has_next']:
                 page += 1
@@ -115,10 +118,10 @@ def main():
                         headers={'Authorization': 'Bearer ' + token})
                 course_grades = check_access(grades_meta)
             else:
-                print('Well done! Start converting')
+                #logger.debug('Well done! Start converting')
                 break
         else:
-            print("O-oh, let's try again")
+            #print("stepik_export: no course_grades['course-grades']")
             break
             exit(1)
 
@@ -130,11 +133,11 @@ def main():
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(grades_for_table)
-    print(f'Saved to csv file: {csv_path}')
+    #print(f'Saved to csv file: {csv_path}')
 
     # write data to sheets document
     if args.google_token and args.table_id:
-        print('Send data to Google Sheets')
+        #logger.debug('Send data to Google Sheets')
         if args.sheet_id:
             sheets.write_data_to_table(csv_path, args.google_token, args.table_id, sheet_id=args.sheet_id)
             print(f'Check data in your table! List id is: {args.sheet_id}')
@@ -144,8 +147,8 @@ def main():
             else:
                 sheet_name = 'course ' + args.course_id
             sheets.write_data_to_table(csv_path, args.google_token, args.table_id, sheet_name=sheet_name)
-            print(f'Check data in your table! List name is: {sheet_name}')
-        print('********************************************************')
+            #logger.info(f'Check data in your table! List name is: {sheet_name}')
+        #logger.debug('********************************************************')
     
     # write data to yandex disk
     if args.yandex_token and args.yandex_path:
@@ -153,10 +156,10 @@ def main():
         try:
             client = yadisk.YaDisk(token=args.yandex_token)
             client.upload(csv_path, yandex_path)
-            print(f'Check data in your disk! Path to the table is: {yandex_path}')
-            print('********************************************************')
+            #logger.info(f'Check data in your disk! Path to the table is: {yandex_path}')
+            #logger.debug('********************************************************')
         except Exception as e:
-            print(f'Saving data to Yandex Disk failed. Error message: {e}')
+            #logger.error(f'Saving data to Yandex Disk failed. Error message: {e}')
             exit(1)
 
 if __name__ == "__main__":

@@ -8,15 +8,6 @@ import logging
 import sys
 from pandas import DataFrame
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-    ],
-)
-logger = logging.getLogger(__name__)
-
 HEADERS = {"Content-Type": "charset=iso-8859"}
 
 
@@ -40,7 +31,7 @@ class Main:
             if cls.args.options and "github" in cls.args.options:
                 person_grades["github"] = users_params[str(user_id)]["github"]
 
-            logger.debug(f'userid: {user_id} fullname: {person_grades["userfullname"]}')
+            #print(f'userid: {user_id} fullname: {person_grades["userfullname"]}')
 
             for activity in person["tabledata"]:
                 itemname_key = "itemname"
@@ -69,7 +60,7 @@ class Main:
                             activity["grade"]["content"] = "0,0"  # issue #13
                         activity["percentage"]["content"] = "0,0 %"
 
-                    logger.debug(activity_name)
+                    #print(activity_name)
 
                     to_float_from_comma = lambda x: (
                         float(x.replace(",", ".")) if x != "-" else "-"
@@ -158,7 +149,7 @@ class Main:
                 grades_data = cls.parse_person_table(grades["tables"], users_params)
 
                 if len(grades_data) == 0:
-                    logger.info("No solutions in course, nothing to export. Exiting")
+                    print("No solutions in course, nothing to export. Exiting")
                     return
 
                 # form suitable structure for output to sheets
@@ -207,6 +198,7 @@ class Main:
                             table_id,
                             sheet_id=cls.args.sheet_id[0],
                         )
+                        print(f'writed to {table_id} {cls.args.sheet_id[0]}')
                     else:
                         if cls.args.sheet_name:
                             for i in range(0, len(cls.args.sheet_name)):
@@ -222,7 +214,7 @@ class Main:
                         sheets.write_data_to_table(
                             df, cls.args.google_token, table_id, sheet_name=sheet_name
                         )
-                logger.info(f"End exporting for course_id={course_id}")
+                print(f"End exporting for course_id={course_id}")
 
                 # write data to yandex disk
                 if cls.args.yandex_token and cls.args.yandex_path:
@@ -237,7 +229,7 @@ class Main:
                     )
 
                     yandex_path = cls.args.yandex_path
-                    logger.info(
+                    print(
                         f"Course {cls.args.course_id} uploaded to table on Disk! Path to the table is: {yandex_path}"
                     )
 
