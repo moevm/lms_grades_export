@@ -16,7 +16,7 @@ def write_data_to_table(csv_path, google_token, table_id, sheet_name=None, sheet
         sh = gc.open_by_key(table_id)
 
     if sheet_id:
-        wk_content = sh.worksheet_by_id(sheet_id)
+        wk_content = sh.worksheet('id', sheet_id)
     else:
         try:
             sh.worksheets('title', sheet_name)

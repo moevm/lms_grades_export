@@ -56,7 +56,7 @@ def write_data_to_table(checker_token, checker_filter, google_token, table_id, s
         sh = gc.open_by_key(table_id)
 
         if sheet_id:
-            wk_content = sh.worksheet_by_id(sheet_id)
+            wk_content = sh.worksheet('id', sheet_id)
         else:
             try:
                 sh.worksheets('title', sheet_name)
