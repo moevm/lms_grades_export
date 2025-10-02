@@ -68,17 +68,17 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
                     logger.info(f">>>>> Экспорт для дисциплины {subject}")
                     returncode = self.process_data(**export_line)
                     if returncode:
-                        self.results.append([export_line["subject"], "- (error)"])
+                        self.results.append([subject, "- (error)"])
                     else:
                         self.results.append(
                             [
-                                export_line["subject"],
+                                subject,
                                 f"https://docs.google.com/spreadsheets/d/1oE{export_line['table_id']}/edit?gid={export_line['sheet_id']}",
                             ]
                         )
                 except Exception as e:
                     logger.error(f"!!!!! Ошибка при экспорте дисциплины {subject}: {e}")
-                    self.results.append([export_line["subject"], "- (error)"])
+                    self.results.append([subject, "- (error)"])
                     self.set_errors_flag()
                 finally:
                     logger.info(f">>>>> Конец экспорта для дисциплины {subject}")
@@ -180,7 +180,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 "--checker_filter",
                 f'"{main_export_info}"',
                 "--checker_token",
-                self.system_cred["dis"]["access_token"],
+                self.system_cred["dis"],
             ],
         }
         return CMD[system]
