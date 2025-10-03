@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
 Модуль для экспорта таблиц и загрузки на Яндекс.Диск
-Заменитель bash-скрипта duplicate_to_yadisk.sh
 """
 
 import argparse
 import csv
-from io import StringIO
 import logging
 import sys
 from pathlib import Path
@@ -17,7 +15,7 @@ from yadisk_manager import DiskManager
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
     ],
@@ -110,11 +108,11 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         )
 
         if not export_success:
-            raise Exception(f"process_export: download_sheet error")
+            raise Exception(f"download_sheet error")
 
         public_link = self.upload_file_to_disk(f"{export_name}.{export_format}")
         if not public_link:
-            raise Exception(f"process_export: upload_file_to_disk error")
+            raise Exception(f"upload_file_to_disk error")
         return public_link
 
     def upload_file_to_disk(self, file_path: str):
