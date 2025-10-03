@@ -84,6 +84,7 @@ def parse_column_specifier(column_spec, headers):
             # Буква колонки
             return column_letter_to_index(column_spec.upper())
 
+        raise ValueError(f"Колонка '{column_spec}' не найдена в {headers}")
     raise ValueError(
         f"Неподдерживаемый формат ({type(column_spec)}) колонки '{column_spec}'"
     )
