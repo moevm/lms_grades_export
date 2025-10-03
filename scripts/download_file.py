@@ -1,12 +1,17 @@
 import argparse
 import gspread
+from io import BytesIO
 import logging
+from openpyxl import Workbook
 import requests
 from pathlib import Path
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 
 logger = logging.getLogger(__name__)
+
+
+# TODO: class for google service
 
 
 def get_sheets_service_and_token(credentials_file="credentials.json"):
@@ -32,28 +37,67 @@ def download_sheet(
     write_to_file=True,
 ) -> bytes | None:
     try:
-        _, access_token = get_sheets_service_and_token(google_cred)
-
-        url = f"https://docs.google.com/spreadsheets/d/{table_id}/export?format={export_format}&gid={sheet_id}"
-
-        response = requests.get(
-            url, headers={"Authorization": f"Bearer {access_token}"}
-        )
-
-        if response.status_code == 200:
-            content = response.content
-            if write_to_file:
-                new_filepath = Path(f"{filename}.{export_format}")
-                new_filepath.parents[0].mkdir(parents=True, exist_ok=True)
-                with open(new_filepath, "wb") as f:
-                    f.write(content)
-                logger.debug(f"download_sheet. Файл сохранен как: {new_filepath}")
-            return content
+        client, access_token = get_sheets_service_and_token(google_cred)
+        if export_format == "xlsx":
+            content = get_excel_with_values(client, table_id, sheet_id)
         else:
-            logger.error(f"Ошибка {response.status_code}: {response.text}")
+            content = export_file(table_id, sheet_id, access_token, export_format)
+
+        if not content:
+            logger.error(f"Ошибка экспорта файла")
+            return None
+
+        if write_to_file:
+            new_filepath = Path(f"{filename}.{export_format}")
+            new_filepath.parents[0].mkdir(parents=True, exist_ok=True)
+            with open(new_filepath, "wb") as f:
+                f.write(content)
+            logger.debug(f"Файл сохранен как: {new_filepath}")
+        return content
 
     except Exception as e:
         logger.error(f"Ошибка при скачивании: {e}")
+
+
+def get_excel_with_values(
+    service: gspread.Client, table_id: str, sheet_id: str
+) -> bytes:
+    """
+    Сохраняет значения (не формулы) листа таблицы в XLSX-файл
+    """
+    spreadsheet = service.open_by_key(table_id)
+    worksheet = spreadsheet.get_worksheet_by_id(int(sheet_id))
+    data = worksheet.get_all_values()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = worksheet.title
+
+    for row in data:
+        ws.append(row)
+
+    file_stream = BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)
+
+    return file_stream.read()
+
+
+def export_file(
+    table_id: str, sheet_id: str, access_token: str, export_format: str
+) -> bytes | None:
+    """
+    Экспортирует файл используя export-url
+    """
+    url = f"https://docs.google.com/spreadsheets/d/{table_id}/export?format={export_format}&gid={sheet_id}"
+
+    response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+
+    if response.status_code == 200:
+        return response.content
+    else:
+        logger.error(f"export_file: Ошибка {response.status_code}: {response.text}")
+        return None
 
 
 def parse_args():
