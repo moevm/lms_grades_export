@@ -2,7 +2,7 @@ import argparse
 import gspread
 from io import BytesIO
 import logging
-from openpyxl import Workbook
+from openpyxl import load_workbook
 import requests
 from pathlib import Path
 from google.oauth2 import service_account
@@ -38,10 +38,10 @@ def download_sheet(
 ) -> bytes | None:
     try:
         client, access_token = get_sheets_service_and_token(google_cred)
-        if export_format == "xlsx":
-            content = get_excel_with_values(client, table_id, sheet_id)
-        else:
-            content = export_file(table_id, sheet_id, access_token, export_format)
+        content = export_file(table_id, sheet_id, access_token, export_format)
+
+        if export_format == "xlsx" and content:
+            content = get_excel_with_values(content)
 
         if not content:
             logger.error(f"Ошибка экспорта файла")
@@ -59,22 +59,12 @@ def download_sheet(
         logger.error(f"Ошибка при скачивании: {e}")
 
 
-def get_excel_with_values(
-    service: gspread.Client, table_id: str, sheet_id: str
-) -> bytes:
+def get_excel_with_values(content: bytes) -> bytes:
     """
     Сохраняет значения (не формулы) листа таблицы в XLSX-файл
     """
-    spreadsheet = service.open_by_key(table_id)
-    worksheet = spreadsheet.get_worksheet_by_id(int(sheet_id))
-    data = worksheet.get_all_values()
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = worksheet.title
-
-    for row in data:
-        ws.append(row)
+    wb = load_workbook(BytesIO(content), data_only=True)
 
     file_stream = BytesIO()
     wb.save(file_stream)
