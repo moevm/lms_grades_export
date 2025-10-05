@@ -1,12 +1,12 @@
 #!/usr/bin/python3
-import sheets
-import requests
-import json
 import datetime
-import args_parser
-import logging
-import sys
+import json
+
+import requests
 from pandas import DataFrame
+
+from utils.arg_parser import arg_parser_moodle
+from utils.gspread import write_data_to_table
 
 HEADERS = {"Content-Type": "charset=iso-8859"}
 
@@ -31,7 +31,7 @@ class Main:
             if cls.args.options and "github" in cls.args.options:
                 person_grades["github"] = users_params[str(user_id)]["github"]
 
-            #print(f'userid: {user_id} fullname: {person_grades["userfullname"]}')
+            # print(f'userid: {user_id} fullname: {person_grades["userfullname"]}')
 
             for activity in person["tabledata"]:
                 itemname_key = "itemname"
@@ -60,7 +60,7 @@ class Main:
                             activity["grade"]["content"] = "0,0"  # issue #13
                         activity["percentage"]["content"] = "0,0 %"
 
-                    #print(activity_name)
+                    # print(activity_name)
 
                     to_float_from_comma = lambda x: (
                         float(x.replace(",", ".")) if x != "-" else "-"
@@ -88,7 +88,7 @@ class Main:
 
     @classmethod
     def main(cls):
-        cls.args = args_parser.arg_parser()
+        cls.args = arg_parser_moodle()
         for course_id in cls.args.course_id:
             with requests.Session() as s:
                 # get enrolled users
@@ -192,13 +192,13 @@ class Main:
                             table_id = cls.args.table_id[i]
 
                     if cls.args.sheet_id:
-                        sheets.write_data_to_table(
+                        write_data_to_table(
                             df,
                             cls.args.google_token,
                             table_id,
                             sheet_id=cls.args.sheet_id[0],
                         )
-                        print(f'writed to {table_id} {cls.args.sheet_id[0]}')
+                        print(f"writed to {table_id} {cls.args.sheet_id[0]}")
                     else:
                         if cls.args.sheet_name:
                             for i in range(0, len(cls.args.sheet_name)):
@@ -211,7 +211,7 @@ class Main:
                                     )
                         else:
                             sheet_name = "course " + course_id
-                        sheets.write_data_to_table(
+                        write_data_to_table(
                             df, cls.args.google_token, table_id, sheet_name=sheet_name
                         )
                 print(f"End exporting for course_id={course_id}")
@@ -219,7 +219,7 @@ class Main:
                 # write data to yandex disk
                 if cls.args.yandex_token and cls.args.yandex_path:
                     # TODO: refactor нadisk
-                    from utils import write_sheet_to_file
+                    from utils.yandex_disk import write_sheet_to_file
 
                     write_sheet_to_file(
                         cls.args.yandex_token,

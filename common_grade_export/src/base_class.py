@@ -1,7 +1,7 @@
 import logging
 import sys
 from io import StringIO
-from download_file import download_sheet, get_sheets_service_and_token
+from utils.download_file import download_sheet, get_sheets_service_and_token
 
 logging.basicConfig(
     level=logging.INFO,

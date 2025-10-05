@@ -1,10 +1,13 @@
 import os
+from logging import getLogger
 from os import environ, path
 
+import yadisk
 from openpyxl import load_workbook
 
-import yadisk
 from utils.gspread import add_csv_to_table
+
+logger = getLogger(__name__)
 
 
 def write_sheet_to_file(yatoken, remote_path, csv_path, sheet_name="export"):

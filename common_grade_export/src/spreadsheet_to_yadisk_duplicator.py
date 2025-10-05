@@ -8,10 +8,10 @@ import csv
 import logging
 import sys
 from pathlib import Path
-from base_class import BaseGoogleSpreadsheetDataProcessor
-from download_file import download_sheet, get_sheets_service_and_token
-from yadisk_manager import DiskManager
 
+from base_class import BaseGoogleSpreadsheetDataProcessor
+from utils.download_file import download_sheet
+from utils.yadisk_manager import DiskManager
 
 logging.basicConfig(
     level=logging.INFO,

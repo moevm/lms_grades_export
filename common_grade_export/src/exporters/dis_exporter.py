@@ -1,11 +1,12 @@
 # /bin/python3
-import pygsheets
-import pandas as pd
-import requests
 from io import StringIO
+
+import pandas as pd
+import pygsheets
+import requests
 import yadisk
 
-from utils.arg_parser import parse_args
+from utils.arg_parser import arg_parser_dis
 
 INT_MASS = [{"one": 1, "two": 2, "what?": 3}]
 
@@ -24,7 +25,7 @@ def load_data_from_dis(checker_filter, checker_token):
         df_data = pd.DataFrame(INT_MASS)
 
     csv_path = "./dis_results.csv"
-    #print(csv_data)
+    # print(csv_data)
     with open(csv_path, mode="w", encoding="utf-8") as file:
         file.write(csv_data)
 
@@ -56,16 +57,18 @@ def write_data_to_table(
                 sh.add_worksheet(sheet_name)
 
             wk_content = sh.worksheet_by_title(sheet_name)
-        #print(df_data)
+        # print(df_data)
         wk_content.set_dataframe(df=df_data, start="A1", copy_head=True)
-        print(f'writed t0 {table_id} {sheet_id}')
+        print(f"writed t0 {table_id} {sheet_id}")
 
     # write data to yandex disk
     if yandex_token and yandex_path:
         # TODO: refactor нadisk
-        from utils import write_sheet_to_file
+        from utils.yandex_disk import write_sheet_to_file_dis
 
-        write_sheet_to_file(yandex_token, yandex_path, csv_path, sheet_name="reports")
+        write_sheet_to_file_dis(
+            yandex_token, yandex_path, csv_path, sheet_name="reports"
+        )
 
         print(
             f"DIS data w/filter: {checker_filter} uploaded to table on Disk! Path to the table is: {yandex_path}"
@@ -73,7 +76,7 @@ def write_data_to_table(
 
 
 def main():
-    args = parse_args()
+    args = arg_parser_dis()
     write_data_to_table(
         checker_token=args.checker_token,
         checker_filter=args.checker_filter,

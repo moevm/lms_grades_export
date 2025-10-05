@@ -1,15 +1,15 @@
 import argparse
 import csv
+import logging
 import subprocess
 import sys
 from json import load as json_load
-import logging
-from pathlib import Path
+
 from base_class import BaseGoogleSpreadsheetDataProcessor
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
     ],
@@ -17,10 +17,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
+class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
 
     def __init__(
-        self, table_id: str, sheet_id: str, google_cred: str, system_cred_path: str
+            self, table_id: str, sheet_id: str, google_cred: str, system_cred_path: str
     ):
         super().__init__(table_id, sheet_id, google_cred)
         self.systems = {"moodle", "dis", "stepik"}
@@ -28,6 +28,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
             self.load_system_creds(system_cred_path)
         )
         self.results = [["subject", "table_link"]]
+        self.google_cred_path = google_cred
 
     @staticmethod
     def load_system_creds(path: str) -> dict:
@@ -103,28 +104,23 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
 
     def run_export(self, system: str, **export_info) -> bool:
         """
-        Запускает docker-контейнер с выгрузкой данных
+        Запускает exporter-модуль с выгрузкой данных
 
         Return:
-            bool: docker run command returncode == 0
+            bool: exporter run command returncode == 0
         """
-        docker_run_cmd = self.create_docker_run_cmd(system, **export_info)
-        result = subprocess.run(docker_run_cmd, capture_output=True, text=True)
-        if result.stdout:
-            logger.info(f"docker stdout: '''{result.stdout}'''")
-        if result.stderr:
-            logger.error(f"docker stderr: '''{result.stderr}'''")
+        exporter_run_cmd = self.create_export_cmd(system, **export_info)
+        result = subprocess.run(exporter_run_cmd, stdout=sys.stdout, stderr=sys.stderr)
         return result.returncode == 0
 
-    def create_docker_run_cmd(
+    def create_export_cmd(
         self, system: str, table_id: str, sheet_id: str, **export_info
     ) -> list[str]:
         """
-        Формирует полную команду запуска docker run
+        Формирует полную команду запуска модуля экспортера
         """
-        cmd = ["docker", "run", "--rm", "-v", f"{self.google_cred}:/app/conf.json"]
-        cmd.extend(["--name", f"{system}_exporter"])
-        cmd.extend(self.get_extended_system_docker_command(system, **export_info))
+        cmd = ["python3"]
+        cmd.extend(self.get_extended_system_command(system, **export_info))
         cmd.extend(
             [
                 "--table_id",
@@ -132,23 +128,23 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 "--sheet_id",
                 sheet_id,
                 "--google_token",
-                "conf.json",
+                self.google_cred_path,
             ]
         )
         return cmd
 
-    def get_extended_system_docker_command(
+    def get_extended_system_command(
         self,
         system: str,
         main_export_info: str,
         additional_export_info: str | None = None,
     ) -> list[str]:
         """
-        Формирует системо-зависимую часть команды docker run для выгрузки
+        Формирует системо-зависимую часть команды
         """
         CMD = {
             "moodle": [
-                "moodle_export_parser:latest",
+                "exporters/moodle_exporter.py",
                 "--moodle_token",
                 self.system_cred["moodle"],
                 "--url",
@@ -161,7 +157,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 "github",
             ],
             "stepik": [
-                "stepik_export_parser:latest",
+                "exporters/stepik_exporter.py",
                 "--client_id",
                 self.system_cred["stepik"]["client_id"],
                 "--client_secret",
@@ -176,7 +172,7 @@ class CourseToSpreadheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 additional_export_info,
             ],
             "dis": [
-                "checker_export_parser:latest",
+                "exporters/dis_exporter.py",
                 "--checker_filter",
                 main_export_info,
                 "--checker_token",
@@ -208,7 +204,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    exporter = CourseToSpreadheetExporter(
+    exporter = CourseToSpreadsheetExporter(
         table_id=args.table_id,
         sheet_id=args.sheet_id,
         google_cred=args.google_cred,
