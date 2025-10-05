@@ -1,74 +1,16 @@
 # /bin/python3
 import pygsheets
 import pandas as pd
-import argparse
 import requests
 from io import StringIO
-import urllib.parse
 import yadisk
-import logging
-import sys
 
+from utils.arg_parser import parse_args
 
 INT_MASS = [{"one": 1, "two": 2, "what?": 3}]
 
 
 EXPORT_URL = "https://slides-checker.moevm.info/get_csv/?limit=0&offset=0&sort=&order="
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--google_token",
-        type=str,
-        required=False,
-        default="conf.json",
-        help="Specify path to google token file",
-    )
-    parser.add_argument(
-        "--checker_token",
-        type=str,
-        required=True,
-        help="Specify session cookie for slides-checker",
-    )
-    parser.add_argument(
-        "--checker_filter",
-        type=str,
-        required=False,
-        help="Specify filter for slides-checker",
-    )
-    parser.add_argument(
-        "--table_id",
-        type=str,
-        required=False,
-        help="Specify Google sheet document id (can find in url)",
-    )
-    parser.add_argument(
-        "--sheet_name",
-        type=str,
-        required=False,
-        help="Specify title for a sheet in a document in which data will be printed",
-    )
-    parser.add_argument(
-        "--sheet_id",
-        type=str,
-        required=False,
-        help="Specify ID for a sheet in a document in which data will be printed. If set, sheet_name is ignored",
-    )
-    parser.add_argument(
-        "--yandex_token",
-        type=str,
-        required=False,
-        help="Specify Yandex token from https://oauth.yandex.ru/client/new application",
-    )
-    parser.add_argument(
-        "--yandex_path",
-        type=str,
-        required=False,
-        help="Specify output filename on Yandex Disk",
-    )
-    args = parser.parse_args()
-    return args
 
 
 def load_data_from_dis(checker_filter, checker_token):
