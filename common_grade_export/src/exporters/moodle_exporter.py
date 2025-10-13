@@ -70,7 +70,7 @@ class Main:
                         {
                             "activity_name": activity_name,
                             "activity_id": activity_id,
-                            "grade": to_float_from_comma(activity["grade"]["content"]),
+                            "grade": activity["grade"]["content"],
                             "percentage": to_float_from_comma(
                                 activity["percentage"]["content"].split(" ")[0]
                             ),
