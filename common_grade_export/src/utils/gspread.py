@@ -1,5 +1,6 @@
 import csv
 import os
+from io import StringIO
 
 import pandas as pd
 import pygsheets
@@ -43,7 +44,11 @@ def write_data_to_table(
 
         wk_content = sh.worksheet_by_title(sheet_name)
 
-    wk_content.set_dataframe(df_data, "A1", copy_head=True)
+    # wk_content.set_dataframe(df_data, "A1", copy_head=True) # problem w/float dot
+    stream = StringIO(df_data.to_csv(sep=',', encoding='utf-8', decimal=','))
+    df = pd.read_csv(stream)
+    df_data = pd.DataFrame(df.to_dict("records"))
+    wk_content.set_dataframe(df=df_data, start="A1", copy_head=True)
 
 
 def add_csv_to_table_dis(
