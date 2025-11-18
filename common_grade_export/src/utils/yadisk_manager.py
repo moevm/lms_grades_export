@@ -1,6 +1,5 @@
-"""Script with DiskManager class and functions for moodle backup
-duplicate moodle_export/*
-"""
+"""Script with DiskManager class and functions for moodle backup"""
+
 from datetime import datetime
 from os import environ, path
 from logging import getLogger
@@ -8,22 +7,23 @@ from logging import getLogger
 import yadisk
 
 
-logger = getLogger()
+logger = getLogger(__name__)
 
 
-class DiskManager():
-    """Light YaDisk manager
-    """
+class DiskManager:
+    """Light YaDisk manager"""
 
-    def __init__(self, yatoken=None, download_path='./'):
-        self.client = yadisk.Client(token=yatoken or environ.get('YADISK_TOKEN'))
+    def __init__(self, token=None, download_path="./"):
+        if not token:
+            token = environ.get("YADISK_TOKEN", "")
+        self.client = yadisk.Client(token=token)
         self.download_path = download_path
 
     def upload(self, local_path: str, disk_path: str, overwrite=True):
         """upload from local_path to disk_path
 
         Args:
-            local_path (str): path to local file 
+            local_path (str): path to local file
             disk_path (str): full path to file on yadisk
             overwrite (bool): overwrite file. Defaults to true
         """
@@ -31,14 +31,27 @@ class DiskManager():
         self.client.upload(local_path, disk_path, overwrite=overwrite)
 
     def download_file_from_disk(self, remote_path: str):
-        """_summary_
+        """dowload from remote_path to self.download_path
 
         Args:
             remote_path (str): full path to file on yadisk
 
         Returns:
-            str: path to downloaded file 
+            str: path to downloaded file
         """
         local_path = self.download_path + path.basename(remote_path)
         self.client.download(remote_path, local_path)
         return local_path
+
+    def publish_file(self, remote_path: str):
+        """publish file
+
+        Args:
+            remote_path (str): full path to file on yadisk
+
+        Returns:
+            str: publish link to file
+        """
+        self.client.publish(remote_path)
+        publish_link = self.client.get_meta(remote_path).public_url
+        return publish_link

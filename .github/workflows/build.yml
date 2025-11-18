@@ -9,15 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build stepik_export image
+      - name: Build common_grade_export image
         if: ${{ !cancelled() }}
         run: |
-          ./build.sh stepik_export
-      - name: Build moodle_export image
-        if: ${{ !cancelled() }}
-        run: |
-          ./build.sh moodle_export
-      - name: Build checker_export image
-        if: ${{ !cancelled() }}
-        run: |
-          ./build.sh checker_export
+          cd common_grade_export
+          docker build -t 'grade_exporter:latest' .
