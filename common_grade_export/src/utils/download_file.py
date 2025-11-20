@@ -4,9 +4,12 @@ from io import BytesIO
 import logging
 from openpyxl import load_workbook
 import requests
+from tempfile import NamedTemporaryFile
 from pathlib import Path
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
+from PyPDF2 import PdfMerger
+from openpyxl import load_workbook, Workbook
 
 logger = logging.getLogger(__name__)
 
@@ -28,20 +31,32 @@ def get_sheets_service_and_token(credentials_file="credentials.json"):
     return client, creds.token
 
 
-def download_sheet(
-    table_id,
-    sheet_id="0",
-    filename="export",
-    export_format="pdf",
-    google_cred="credentials.json",
-    write_to_file=True,
+def download_sheets(
+    table_id: str,
+    sheet_ids: list[str],
+    filename: str = "export",
+    export_format: str = "pdf",
+    google_cred: str = "credentials.json",
+    write_to_file: bool = True,
 ) -> bytes | None:
+    """
+    Скачивает несколько листов и объединяет их в один файл
+    """
     try:
         client, access_token = get_sheets_service_and_token(google_cred)
-        content = export_file(table_id, sheet_id, access_token, export_format)
-
-        if export_format == "xlsx" and content:
-            content = get_excel_with_values(content)
+        
+        if len(sheet_ids) == 1:
+            content = export_file(table_id, sheet_ids[0], access_token, export_format)
+            if export_format == "xlsx" and content:
+                content = get_excel_with_values(content)
+        else:
+            if export_format == "pdf":
+                content = merge_multiple_pdfs(table_id, sheet_ids, access_token)
+            elif export_format == "xlsx":
+                content = merge_multiple_excels(table_id, sheet_ids, access_token)
+            else:
+                logger.warning(f"Формат {export_format} не поддерживает множественные листы, используется первый лист")
+                content = export_file(table_id, sheet_ids[0], access_token, export_format)
 
         if not content:
             logger.error(f"Ошибка экспорта файла")
@@ -57,13 +72,72 @@ def download_sheet(
 
     except Exception as e:
         logger.error(f"Ошибка при скачивании: {e}")
+        return None
+
+
+def merge_multiple_pdfs(table_id: str, sheet_ids: list[str], access_token: str) -> bytes:
+    """
+    Объединяет несколько PDF-файлов в один PDF-файл
+    """
+    merger = PdfMerger()
+    temp_files = []
+    
+    try:
+        for i, sheet_id in enumerate(sheet_ids):
+            pdf_content = export_file(table_id, sheet_id, access_token, "pdf")
+            if pdf_content:
+                with NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                    temp_file.write(pdf_content)
+                    temp_files.append(temp_file.name)
+                    merger.append(temp_file.name)
+        
+        merged_pdf = BytesIO()
+        merger.write(merged_pdf)
+        merger.close()
+        
+        return merged_pdf.getvalue()
+        
+    finally:
+        for temp_file in temp_files:
+            try:
+                Path(temp_file).unlink(missing_ok=True)
+            except:
+                pass
+
+
+def merge_multiple_excels(table_id: str, sheet_ids: list[str], access_token: str) -> bytes:
+    """
+    Объединяет несколько листов в один XLSX-файл
+    """
+    merged_workbook = Workbook()    
+    try:
+        for i, sheet_id in enumerate(sheet_ids):
+            excel_content = export_file(table_id, sheet_id, access_token, "xlsx")
+            if excel_content:
+                temp_wb = load_workbook(BytesIO(excel_content), data_only=True)
+                
+                for sheet_name in temp_wb.sheetnames:
+                    source_sheet = temp_wb[sheet_name]
+                    new_sheet = merged_workbook.create_sheet(title=f"{sheet_name}")
+                    
+                    for row in source_sheet.iter_rows():
+                        for cell in row:
+                            new_sheet[cell.coordinate].value = cell.value
+        
+        output = BytesIO()
+        merged_workbook.save(output)
+        output.seek(0)
+        
+        return output.getvalue()
+        
+    finally:
+        merged_workbook.close()
 
 
 def get_excel_with_values(content: bytes) -> bytes:
     """
     Сохраняет значения (не формулы) листа таблицы в XLSX-файл
     """
-
     wb = load_workbook(BytesIO(content), data_only=True)
 
     file_stream = BytesIO()
@@ -89,12 +163,11 @@ def export_file(
         logger.error(f"export_file: Ошибка {response.status_code}: {response.text}")
         return None
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Download Google Sheets")
     parser.add_argument("--table_id", required=True, help="Google Sheets table ID")
     parser.add_argument(
-        "--sheet_id", required=True, default="0", type=str, help="Sheet ID (default: 0)"
+        "--sheet_ids", required=True, default="0", type=lambda x: x.split(";"), help="Sheet IDs separated by ; (default: 0)"
     )
     parser.add_argument(
         "--format", choices=["csv", "pdf", "xlsx"], default="csv", help="Output format"
@@ -110,8 +183,8 @@ def parse_args():
 def main():
     args = parse_args()
 
-    download_sheet(
-        args.table_id, args.sheet_id, args.filename, args.format, args.google_cred
+    download_sheets(
+        args.table_id, args.sheet_ids, args.filename, args.format, args.google_cred
     )
 
 

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
-from utils.download_file import download_sheet
+from utils.download_file import download_sheets
 from utils.yadisk_manager import DiskManager
 
 logging.basicConfig(
@@ -99,16 +99,18 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
 
         Args: данные строки из таблицы
         """
-        export_success = download_sheet(
+        sheet_ids = [s.strip() for s in sheet_id.split(';')]
+        
+        export_success = download_sheets(
             table_id=table_id,
-            sheet_id=sheet_id,
+            sheet_ids=sheet_ids,
             export_format=export_format,
             filename=export_name,
             google_cred=self.google_cred,
         )
 
         if not export_success:
-            raise Exception(f"download_sheet error")
+            raise Exception(f"download_sheets error")
 
         public_link = self.upload_file_to_disk(f"{export_name}.{export_format}")
         if not public_link:

@@ -1,7 +1,7 @@
 import logging
 import sys
 from io import StringIO
-from utils.download_file import download_sheet, get_sheets_service_and_token
+from utils.download_file import download_sheets, get_sheets_service_and_token
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,9 +42,9 @@ class BaseGoogleSpreadsheetDataProcessor:
         """
         Получает данные из управляющей таблицы
         """
-        content = download_sheet(
+        content = download_sheets(
             table_id=self.table_id,
-            sheet_id=self.sheet_id,
+            sheet_ids=[self.sheet_id],
             google_cred=self.google_cred,
             export_format="csv",
             write_to_file=False,
