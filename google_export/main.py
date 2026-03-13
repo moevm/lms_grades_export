@@ -191,6 +191,7 @@ if __name__ == '__main__':
             lines = [line.rstrip() for line in file]
     # ids = lines
     elif args.google_token and args.table_id and args.input_sheet_id:
+        print('getting ids from google table')
         lines = sheets.read_ids_from_table(
             args.google_token,
             args.table_id,
@@ -200,6 +201,9 @@ if __name__ == '__main__':
         lines = sheets.cut_lines(lines, args.input_column_skip)
     else:
         print('set ids file or google table input')
+
+    print('recieved following ids')
+    print(lines)
     q = get_awards(lines, args.key, args.curl_args, args.timeout, args.repeat)
     write_to_local_csv(q, args.curl_args, args.output, args.repeat)
     if args.google_token and args.table_id and args.sheet_id:
