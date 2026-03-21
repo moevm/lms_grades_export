@@ -46,11 +46,9 @@ class Main:
                     if cls.level1_class not in item_classes:
                         activity_name_raw_content = activity[itemname_key]["content"]  # html
                         activity_name = activity_name_raw_content.rpartition("</a>")[0].rsplit('">')[-1]    # name
-                        activity_id = re.search(r"grade\.php\?id=\d+", activity_name_raw_content)
+                        activity_id = re.search(r"grade\.php\?id=(\d+)", activity_name_raw_content)
                         activity_id = activity_id.group(1) if activity_id else None     # id
-                        activity["grade"]["content"] = activity["grade"][
-                            "content"
-                        ].rsplit(">", 1)[-1]
+                        activity["grade"]["content"] = activity["grade"]["content"].rsplit(">", 1)[-1]
                     else:
                         activity_name = "total"
                         if activity["grade"]["content"] == "-":
