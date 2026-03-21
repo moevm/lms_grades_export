@@ -69,6 +69,12 @@ def arg_parser_moodle():
         help="Id of a course to parse",
     )
     parser.add_argument(
+        "--export_link",
+        type=str,
+        required=False,
+        help="Specify export_link for moodle published grades",
+    )
+    parser.add_argument(
         "--csv_path", type=str, required=True, help="Specify path to output csv file"
     )
     parser.add_argument(
@@ -118,12 +124,6 @@ def arg_parser_moodle():
         type=lambda s: set(i for i in s.split(",")),
         required=False,
         help="Specify options for column names",
-    )
-    parser.add_argument(
-        "--export_link",
-        type=lambda s: set(i for i in s.split(",")),
-        required=False,
-        help="Specify export_link for moodle publish",
     )
     args = parser.parse_args()
     return args

@@ -3,7 +3,7 @@ import datetime
 import json
 import re
 import requests
-from pandas import DataFrame
+from pandas import DataFrame, read_excel
 
 from utils.arg_parser import arg_parser_moodle
 from utils.gspread import write_data_to_table
@@ -84,6 +84,12 @@ class Main:
     @classmethod
     def main(cls):
         cls.args = arg_parser_moodle()
+        # TODO: rework and impove ALL code below
+        if cls.args.export_link:
+            df = read_excel(cls.args.export_link).fillna("")
+            df["Итоговая оценка за курс (Значение)"] = df["Итоговая оценка за курс (Значение)"].map(lambda x: str(x).replace('.', ','))
+            write_data_to_table(df, cls.args.google_token, cls.args.table_id[0], sheet_id=cls.args.sheet_id[0])
+            return
         for course_id in cls.args.course_id:
             with requests.Session() as s:
                 # get enrolled users
