@@ -155,7 +155,7 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 main_export_info,
                 "--options",
                 "github",
-            ],
+            ] + ["--export_link", f"'{additional_export_info}'"] if additional_export_info else [],
             "stepik": [
                 "exporters/stepik_exporter.py",
                 "--client_id",

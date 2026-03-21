@@ -119,6 +119,12 @@ def arg_parser_moodle():
         required=False,
         help="Specify options for column names",
     )
+    parser.add_argument(
+        "--export_link",
+        type=lambda s: set(i for i in s.split(",")),
+        required=False,
+        help="Specify export_link for moodle publish",
+    )
     args = parser.parse_args()
     return args
 
