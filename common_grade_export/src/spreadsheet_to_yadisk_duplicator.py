@@ -2,24 +2,20 @@
 """
 Модуль для экспорта таблиц и загрузки на Яндекс.Диск
 """
+import logging.config
+
+logging.config.fileConfig('./logging.conf')
+
 
 import argparse
 import csv
 import logging
-import sys
 from pathlib import Path
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
 from utils.download_file import download_sheets
 from utils.yadisk_manager import DiskManager
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-    ],
-)
 logger = logging.getLogger(__name__)
 
 
@@ -66,9 +62,7 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
             )
             for export_line in control_data:
                 subject = export_line.pop("subject")
-                filepath = (
-                    f"{export_line['export_name']}.{export_line['export_format']}"
-                )
+                filepath = f"{export_line['export_name']}.{export_line['export_format']}"
                 try:
                     logger.info(f">>>>> Экспорт для дисциплины {subject}")
                     link = self.process_data(**export_line)
@@ -101,33 +95,33 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         """
         sheet_ids = [s.strip() for s in sheet_id.split(';')]
         
-        export_success = download_sheets(
+        content, path_to_file = download_sheets(
             table_id=table_id,
             sheet_ids=sheet_ids,
             export_format=export_format,
-            filename=export_name,
             google_cred=self.google_cred,
         )
 
-        if not export_success:
+        if not content or not path_to_file:
             raise Exception(f"download_sheets error")
 
-        public_link = self.upload_file_to_disk(f"{export_name}.{export_format}")
+        public_link = self.upload_file_to_disk(path_to_file, f"{export_name}.{export_format}")
         if not public_link:
             raise Exception(f"upload_file_to_disk error")
         return public_link
 
-    def upload_file_to_disk(self, file_path: str):
+    def upload_file_to_disk(self, path_to_file: str, disk_path: str):
         """Загрузка файла на диск и его публикация
 
         Args:
-            file_path (str): path to local file
+            path_to_file (str): path to local file
+            disk_path (str): path to file on disk
         Return:
             str: public link to file
         """
-        full_path = f"{self.yadisk_dir}/{file_path}"
-        self.disk_manager.upload(file_path, full_path)
-        return self.disk_manager.publish_file(full_path)
+        full_disk_path = f"{self.yadisk_dir}/{disk_path}"
+        self.disk_manager.upload(path_to_file, full_disk_path)
+        return self.disk_manager.publish_file(full_disk_path)
 
 
 def parse_args():
@@ -154,7 +148,6 @@ def parse_args():
 
 
 if __name__ == "__main__":
-
     args = parse_args()
 
     duplicator = SpreadheetToYaDiskDuplicator(

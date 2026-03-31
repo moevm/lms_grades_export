@@ -1,3 +1,7 @@
+import logging.config
+
+logging.config.fileConfig('./logging.conf')
+
 import argparse
 import csv
 import logging
@@ -7,13 +11,7 @@ from json import load as json_load
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+
 logger = logging.getLogger(__name__)
 
 
