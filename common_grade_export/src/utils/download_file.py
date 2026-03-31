@@ -41,13 +41,13 @@ def get_sheets_service_and_token(credentials_file="credentials.json"):
 def download_sheets(
     table_id: str,
     sheet_ids: list[str],
-    filename: str = "export",
     export_format: str = "pdf",
     google_cred: str = "credentials.json",
     write_to_file: bool = True,
-) -> bytes | None:
+) -> tuple[bytes | None, str | None]:
     """
-    Скачивает несколько листов и объединяет их в один файл
+    Скачивает один или несколько листов и объединяет их в один файл
+    Возвращает содержимое файла и путь к временному файлу на диске (если write_to_file=True)
     """
     try:
         client, access_token = get_sheets_service_and_token(google_cred)
@@ -67,19 +67,19 @@ def download_sheets(
 
         if not content:
             logger.error(f"Ошибка экспорта файла")
-            return None
+            return None, None
 
+        temp_filename = None
         if write_to_file:
-            new_filepath = Path(f"{filename}.{export_format}")
-            new_filepath.parents[0].mkdir(parents=True, exist_ok=True)
-            with open(new_filepath, "wb") as f:
-                f.write(content)
-            logger.debug(f"Файл сохранен как: {new_filepath}")
-        return content
+            with NamedTemporaryFile(suffix=f".{export_format}", delete=False) as temp_file:
+                temp_file.write(content)
+                temp_filename = temp_file.name
+                logger.debug(f"Листы {sheet_ids[0]} из таблицы {table_id} сохранены во временный файл для дальнейшей обработки: {temp_filename}")
+        return content, temp_filename
 
     except Exception as e:
         logger.error(f"Ошибка при скачивании: {e}")
-        return None
+        return None, None
 
 
 def merge_multiple_pdfs(table_id: str, sheet_ids: list[str], access_token: str) -> bytes:
@@ -87,29 +87,18 @@ def merge_multiple_pdfs(table_id: str, sheet_ids: list[str], access_token: str) 
     Объединяет несколько PDF-файлов в один PDF-файл
     """
     merger = PdfMerger()
-    temp_files = []
+    for i, sheet_id in enumerate(sheet_ids):
+        pdf_content = export_file(table_id, sheet_id, access_token, "pdf")
+        if pdf_content:
+            with NamedTemporaryFile(suffix='.pdf') as temp_file:
+                temp_file.write(pdf_content)
+                merger.append(temp_file.name)
     
-    try:
-        for i, sheet_id in enumerate(sheet_ids):
-            pdf_content = export_file(table_id, sheet_id, access_token, "pdf")
-            if pdf_content:
-                with NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-                    temp_file.write(pdf_content)
-                    temp_files.append(temp_file.name)
-                    merger.append(temp_file.name)
-        
-        merged_pdf = BytesIO()
-        merger.write(merged_pdf)
-        merger.close()
-        
-        return merged_pdf.getvalue()
-        
-    finally:
-        for temp_file in temp_files:
-            try:
-                Path(temp_file).unlink(missing_ok=True)
-            except:
-                pass
+    merged_pdf = BytesIO()
+    merger.write(merged_pdf)
+    merger.close()
+    
+    return merged_pdf.getvalue()
 
 
 def merge_multiple_excels(table_id: str, sheet_ids: list[str], access_token: str) -> bytes:
@@ -194,7 +183,7 @@ def main():
     args = parse_args()
 
     download_sheets(
-        args.table_id, args.sheet_ids, args.filename, args.format, args.google_cred
+        table_id=args.table_id, sheet_ids=args.sheet_ids, export_format=args.format, google_cred=args.google_cred
     )
 
 

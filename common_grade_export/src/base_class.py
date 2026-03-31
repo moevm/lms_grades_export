@@ -36,7 +36,7 @@ class BaseGoogleSpreadsheetDataProcessor:
         """
         Получает данные из управляющей таблицы
         """
-        content = download_sheets(
+        content, _ = download_sheets(
             table_id=self.table_id,
             sheet_ids=[self.sheet_id],
             google_cred=self.google_cred,
