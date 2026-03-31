@@ -13,13 +13,6 @@ from base_class import BaseGoogleSpreadsheetDataProcessor
 from utils.download_file import download_sheets
 from utils.yadisk_manager import DiskManager
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-    ],
-)
 logger = logging.getLogger(__name__)
 
 
@@ -154,6 +147,8 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    import logging.config
+    logging.config.fileConfig('./logging.conf')
 
     args = parse_args()
 
