@@ -1,3 +1,7 @@
+import logging.config
+
+logging.config.fileConfig('./logging.conf')
+
 import argparse
 import csv
 import logging
@@ -196,9 +200,6 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    import logging.config
-    logging.config.fileConfig('./logging.conf')
-
     args = parse_args()
 
     exporter = CourseToSpreadsheetExporter(
