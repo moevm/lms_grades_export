@@ -2,11 +2,14 @@
 """
 Модуль для экспорта таблиц и загрузки на Яндекс.Диск
 """
+import logging.config
+
+logging.config.fileConfig('./logging.conf')
+
 
 import argparse
 import csv
 import logging
-import sys
 from pathlib import Path
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
@@ -147,9 +150,6 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    import logging.config
-    logging.config.fileConfig('./logging.conf')
-
     args = parse_args()
 
     duplicator = SpreadheetToYaDiskDuplicator(
