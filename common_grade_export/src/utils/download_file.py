@@ -10,6 +10,13 @@ from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from PyPDF2 import PdfMerger
 from openpyxl import load_workbook, Workbook
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_incrementing,
+    retry_if_exception_type,
+    before_sleep_log,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +154,12 @@ def get_excel_with_values(content: bytes) -> bytes:
     return file_stream.read()
 
 
+@retry(
+    stop=stop_after_attempt(3), 
+    wait=wait_incrementing(start=10, increment=30),
+    retry=retry_if_exception_type(requests.exceptions.RequestException),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+)
 def export_file(
     table_id: str, sheet_id: str, access_token: str, export_format: str
 ) -> bytes | None:
@@ -155,13 +168,10 @@ def export_file(
     """
     url = f"https://docs.google.com/spreadsheets/d/{table_id}/export?format={export_format}&gid={sheet_id}"
 
-    response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"})
+    response = requests.get(url, headers={"Authorization": f"Bearer {access_token}"}, timeout=(5, 10))
+    response.raise_for_status()
+    return response.content
 
-    if response.status_code == 200:
-        return response.content
-    else:
-        logger.error(f"export_file: Ошибка {response.status_code}: {response.text}")
-        return None
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Download Google Sheets")
