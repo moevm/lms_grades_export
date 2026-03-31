@@ -6,3 +6,4 @@ yadisk==3.4.0
 openpyxl==3.1.5
 gspread==6.2.1
 PyPDF2==3.0.1
+tenacity==9.1.4
