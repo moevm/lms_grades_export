@@ -14,7 +14,7 @@ def arg_parser_dis():
         "--checker_token",
         type=str,
         required=True,
-        help="Specify session cookie for slides-checker",
+        help="Specify access token for slides-checker",
     )
     parser.add_argument(
         "--checker_filter",
@@ -51,6 +51,50 @@ def arg_parser_dis():
         type=str,
         required=False,
         help="Specify output filename on Yandex Disk",
+    )
+    args = parser.parse_args()
+    return args
+
+
+def arg_parser_wst():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--google_token",
+        type=str,
+        required=False,
+        default="conf.json",
+        help="Specify path to google token file",
+    )
+    parser.add_argument(
+        "--wst_token",
+        type=str,
+        required=True,
+        help="Specify access token for wst",
+    )
+    parser.add_argument(
+        "--wst_filter",
+        type=str,
+        required=False,
+        help="Specify filter for wst",
+    )
+    parser.add_argument(
+        "--table_id",
+        type=str,
+        required=False,
+        help="Specify Google sheet document id (can find in url)",
+    )
+    parser.add_argument(
+        "--sheet_id",
+        type=str,
+        required=True,
+        help="Specify ID for a sheet in a document in which data will be printed. If set, sheet_name is ignored",
+    )
+    parser.add_argument(
+        "--start_cell",
+        default="A1",
+        type=str,
+        required=False,
+        help="Specify start cell for table inserting",
     )
     args = parser.parse_args()
     return args

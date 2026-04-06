@@ -1,3 +1,7 @@
+import logging.config
+
+logging.config.fileConfig('./logging.conf')
+
 import argparse
 import csv
 import logging
@@ -7,13 +11,7 @@ from json import load as json_load
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(levelname) -10s %(asctime)s %(module)s:%(lineno)s %(funcName)s %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+
 logger = logging.getLogger(__name__)
 
 
@@ -178,6 +176,13 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 "--checker_token",
                 self.system_cred["dis"],
             ],
+            "wst": [
+                "exporters/wst_exporter.py",
+                "--wst_filter",
+                main_export_info,
+                "--wst_token",
+                self.system_cred["wst"],
+            ],
         }
         return CMD[system]
 
@@ -196,7 +201,7 @@ def parse_args():
     parser.add_argument(
         "--system_cred",
         required=True,
-        help="Path to system (moodle/stepik/dis) credentials file",
+        help="Path to system (moodle/stepik/dis/wst) credentials file",
     )
     return parser.parse_args()
 

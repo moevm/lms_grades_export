@@ -3,13 +3,7 @@ import sys
 from io import StringIO
 from utils.download_file import download_sheets, get_sheets_service_and_token
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,8 +40,7 @@ class BaseGoogleSpreadsheetDataProcessor:
             table_id=self.table_id,
             sheet_ids=[self.sheet_id],
             google_cred=self.google_cred,
-            export_format="csv",
-            write_to_file=False,
+            export_format="csv"
         )
 
         if content:
