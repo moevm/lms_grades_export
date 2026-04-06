@@ -18,6 +18,8 @@ def load_data_from_wst(wst_filter, wst_token):
     csv_data = StringIO(requests.get(url).content.decode("utf-8"))
 
     df = pd.read_csv(csv_data)
+    csv_data.seek(0)
+
     df_data = pd.DataFrame(df.to_dict("records"))
 
     return csv_data, df_data
