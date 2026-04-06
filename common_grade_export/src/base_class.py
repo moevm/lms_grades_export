@@ -36,12 +36,11 @@ class BaseGoogleSpreadsheetDataProcessor:
         """
         Получает данные из управляющей таблицы
         """
-        content, _ = download_sheets(
+        content = download_sheets(
             table_id=self.table_id,
             sheet_ids=[self.sheet_id],
             google_cred=self.google_cred,
-            export_format="csv",
-            write_to_file=False,
+            export_format="csv"
         )
 
         if content:

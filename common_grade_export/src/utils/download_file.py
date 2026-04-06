@@ -42,9 +42,8 @@ def download_sheets(
     table_id: str,
     sheet_ids: list[str],
     export_format: str = "pdf",
-    google_cred: str = "credentials.json",
-    write_to_file: bool = True,
-) -> tuple[bytes | None, str | None]:
+    google_cred: str = "credentials.json"
+) -> bytes | None:
     """
     Скачивает один или несколько листов и объединяет их в один файл
     Возвращает содержимое файла и путь к временному файлу на диске (если write_to_file=True)
@@ -67,19 +66,13 @@ def download_sheets(
 
         if not content:
             logger.error(f"Ошибка экспорта файла")
-            return None, None
+            return None
 
-        temp_filename = None
-        if write_to_file:
-            with NamedTemporaryFile(suffix=f".{export_format}", delete=False) as temp_file:
-                temp_file.write(content)
-                temp_filename = temp_file.name
-                logger.debug(f"Листы {sheet_ids[0]} из таблицы {table_id} сохранены во временный файл для дальнейшей обработки: {temp_filename}")
-        return content, temp_filename
+        return content
 
     except Exception as e:
         logger.error(f"Ошибка при скачивании: {e}")
-        return None, None
+        return None
 
 
 def merge_multiple_pdfs(table_id: str, sheet_ids: list[str], access_token: str) -> bytes:

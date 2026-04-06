@@ -11,6 +11,7 @@ import argparse
 import csv
 import logging
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
 from utils.download_file import download_sheets
@@ -95,20 +96,24 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         """
         sheet_ids = [s.strip() for s in sheet_id.split(';')]
         
-        content, path_to_file = download_sheets(
+        content = download_sheets(
             table_id=table_id,
             sheet_ids=sheet_ids,
             export_format=export_format,
             google_cred=self.google_cred,
         )
 
-        if not content or not path_to_file:
+        if not content:
             raise Exception(f"download_sheets error")
 
-        public_link = self.upload_file_to_disk(path_to_file, f"{export_name}.{export_format}")
-        if not public_link:
-            raise Exception(f"upload_file_to_disk error")
-        return public_link
+        with NamedTemporaryFile(suffix=f".{export_format}", delete_on_close=False) as temp_file:
+            temp_file.write(content)
+            temp_filename = temp_file.name
+            logger.debug(f"Листы {sheet_ids} из таблицы {table_id} сохранены во временный файл для дальнейшей обработки: {temp_filename}")
+            public_link = self.upload_file_to_disk(temp_filename, f"{export_name}.{export_format}")
+            if not public_link:
+                raise Exception(f"upload_file_to_disk error")
+            return public_link
 
     def upload_file_to_disk(self, path_to_file: str, disk_path: str):
         """Загрузка файла на диск и его публикация
