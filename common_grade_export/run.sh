@@ -11,6 +11,7 @@ cat > $SYSTEM_CRED <<EOF
 {
     "moodle": "$MOODLE_TOKEN",
     "dis": "$DIS_ACCESS_TOKEN",
+    "wst": "$WST_ACCESS_TOKEN",
     "stepik": {
         "client_id": "$STEPIK_CLIENT_ID",
         "client_secret": "$STEPIK_CLIENT_SECRET"
