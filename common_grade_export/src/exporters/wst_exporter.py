@@ -15,8 +15,6 @@ EXPORT_URL = "http://speech-trainer.moevm.info/api/trainings/csv?count=1000&"
 
 def load_data_from_wst(wst_filter, wst_token):
     url = fr"{EXPORT_URL}&{wst_filter}&TOKEN={wst_token}"
-    print(url, requests.get(url))
-    print(requests.get(url).content)
     csv_data = StringIO(requests.get(url).content.decode("utf-8"))
 
     df = pd.read_csv(csv_data)
@@ -40,14 +38,8 @@ def write_data_to_table(
         sh = gc.open_by_key(table_id)
 
         wk_content = sh.get_worksheet_by_id(sheet_id)
-        print(csv_data)
         reader = csv.reader(csv_data)
-        b = []
-        for a in reader:
-            print(a)
-            b.append(a)
-        print(a)
-        wk_content.update(values=b, range_name=start_cell)
+        wk_content.update(values=[i for i in reader], range_name=start_cell)
         print(f"WST data's writed to {table_id} {sheet_id}")
 
 
