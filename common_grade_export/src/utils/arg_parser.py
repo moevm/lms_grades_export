@@ -91,6 +91,7 @@ def arg_parser_wst():
     )
     parser.add_argument(
         "--start_cell",
+        default="A1",
         type=str,
         required=False,
         help="Specify start cell for table inserting",
