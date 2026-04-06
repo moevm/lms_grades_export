@@ -176,6 +176,13 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 "--checker_token",
                 self.system_cred["dis"],
             ],
+            "wst": [
+                "exporters/wst_exporter.py",
+                "--wst_filter",
+                main_export_info,
+                "--wst_token",
+                self.system_cred["wst"],
+            ],
         }
         return CMD[system]
 
@@ -194,7 +201,7 @@ def parse_args():
     parser.add_argument(
         "--system_cred",
         required=True,
-        help="Path to system (moodle/stepik/dis) credentials file",
+        help="Path to system (moodle/stepik/dis/wst) credentials file",
     )
     return parser.parse_args()
 
