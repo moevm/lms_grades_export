@@ -98,7 +98,7 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         """
         sheet_ids = [s.strip() for s in sheet_id.split(';')]
         
-        remove_col_idxs = list(map(int, remove_cols.split(";"))) if remove_cols else None
+        remove_col_idxs = sorted((map(int, remove_cols.split(";"))), reverse=True) if remove_cols else None
 
         content = download_sheets(
             table_id=table_id,
