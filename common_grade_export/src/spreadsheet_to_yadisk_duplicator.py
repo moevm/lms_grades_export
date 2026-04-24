@@ -59,6 +59,7 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
                     "sheet_id",
                     "export_format",
                     "export_name",
+                    "remove_cols"
                 ],
             )
             for export_line in control_data:
@@ -88,6 +89,7 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         sheet_id: str,
         export_name: str,
         export_format: str,
+        remove_cols: str | None = None
     ) -> str:
         """
         Обрабатывает одну строку управляющей таблицы
@@ -96,11 +98,14 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         """
         sheet_ids = [s.strip() for s in sheet_id.split(';')]
         
+        remove_col_idxs = list(map(int, remove_cols.split(";"))) if remove_cols else None
+
         content = download_sheets(
             table_id=table_id,
             sheet_ids=sheet_ids,
             export_format=export_format,
             google_cred=self.google_cred,
+            remove_cols=remove_col_idxs
         )
 
         if not content:

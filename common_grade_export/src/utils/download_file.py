@@ -42,7 +42,8 @@ def download_sheets(
     table_id: str,
     sheet_ids: list[str],
     export_format: str = "pdf",
-    google_cred: str = "credentials.json"
+    google_cred: str = "credentials.json",
+    remove_cols: list[int] | None = None
 ) -> bytes | None:
     """
     Скачивает один или несколько листов и объединяет их в один файл
@@ -54,7 +55,7 @@ def download_sheets(
         if len(sheet_ids) == 1:
             content = export_file(table_id, sheet_ids[0], access_token, export_format)
             if export_format == "xlsx" and content:
-                content = get_excel_with_values(content)
+                content = get_excel_with_values(content, remove_cols)
         else:
             if export_format == "pdf":
                 content = merge_multiple_pdfs(table_id, sheet_ids, access_token)
@@ -104,30 +105,35 @@ def merge_multiple_excels(table_id: str, sheet_ids: list[str], access_token: str
             excel_content = export_file(table_id, sheet_id, access_token, "xlsx")
             if excel_content:
                 temp_wb = load_workbook(BytesIO(excel_content), data_only=True)
-                
+
                 for sheet_name in temp_wb.sheetnames:
                     source_sheet = temp_wb[sheet_name]
                     new_sheet = merged_workbook.create_sheet(title=f"{sheet_name}")
-                    
+
                     for row in source_sheet.iter_rows():
                         for cell in row:
                             new_sheet[cell.coordinate].value = cell.value
-        
+
         output = BytesIO()
         merged_workbook.save(output)
         output.seek(0)
-        
+
         return output.getvalue()
-        
+
     finally:
         merged_workbook.close()
 
 
-def get_excel_with_values(content: bytes) -> bytes:
+def get_excel_with_values(content: bytes, remove_cols: list[int] | None = None) -> bytes:
     """
-    Сохраняет значения (не формулы) листа таблицы в XLSX-файл
+    Сохраняет значения (не формулы) листа таблицы в XLSX-файл, удаляет из таблицы колонки remove_cols (индексы 1-based)
     """
     wb = load_workbook(BytesIO(content), data_only=True)
+
+    if remove_cols:
+        sheet = wb.active
+        for index in remove_cols:
+            sheet.delete_cols(idx=index)
 
     file_stream = BytesIO()
     wb.save(file_stream)
