@@ -1,30 +1,22 @@
-import logging.config
-
-logging.config.fileConfig('./logging.conf')
-
 import argparse
 import csv
 import logging
+import logging.config
 import subprocess
 import sys
 from json import load as json_load
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
 
-
+logging.config.fileConfig('./logging.conf')
 logger = logging.getLogger(__name__)
 
 
 class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
-
-    def __init__(
-            self, table_id: str, sheet_id: str, google_cred: str, system_cred_path: str
-    ):
+    def __init__(self, table_id: str, sheet_id: str, google_cred: str, system_cred_path: str):
         super().__init__(table_id, sheet_id, google_cred)
         self.systems = {"moodle", "dis", "stepik"}
-        self.system_cred = self.validate_system_credentials(
-            self.load_system_creds(system_cred_path)
-        )
+        self.system_cred = self.validate_system_credentials(self.load_system_creds(system_cred_path))
         self.results = [["subject", "table_link"]]
         self.google_cred_path = google_cred
 
@@ -37,9 +29,7 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
         # TODO: real validation?
         if not all(system_cred.values()):
             # Значения всех систем = None -> не можем ничего выгружать
-            raise ValueError(
-                f"Нет каких-либо валидных данных для систем: {system_cred}"
-            )
+            raise ValueError(f"Нет каких-либо валидных данных для систем: {system_cred}")
         valid_systems = self.systems and set(system_cred.keys())
         if not valid_systems:
             # Нет валидных систем -> не можем ничего выгружать
@@ -95,9 +85,7 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
         """
 
         if system not in self.system_cred:
-            raise ValueError(
-                f"Для системы {system} нет валидных данных в {self.system_cred}"
-            )
+            raise ValueError(f"Для системы {system} нет валидных данных в {self.system_cred}")
         return self.run_export(system, **export_info)
 
     def run_export(self, system: str, **export_info) -> bool:
@@ -111,9 +99,7 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
         result = subprocess.run(exporter_run_cmd, stdout=sys.stdout, stderr=sys.stderr)
         return result.returncode == 0
 
-    def create_export_cmd(
-        self, system: str, table_id: str, sheet_id: str, **export_info
-    ) -> list[str]:
+    def create_export_cmd(self, system: str, table_id: str, sheet_id: str, **export_info) -> list[str]:
         """
         Формирует полную команду запуска модуля экспортера
         """
@@ -188,16 +174,10 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Download Admin Google Sheets with duplicate info"
-    )
+    parser = argparse.ArgumentParser(description="Download Admin Google Sheets with duplicate info")
     parser.add_argument("--table_id", required=True, help="Google Sheets table ID")
-    parser.add_argument(
-        "--sheet_id", required=True, default=0, type=int, help="Sheet ID (default: 0)"
-    )
-    parser.add_argument(
-        "--google_cred", required=True, help="Path to google credentials file"
-    )
+    parser.add_argument("--sheet_id", required=True, default=0, type=int, help="Sheet ID (default: 0)")
+    parser.add_argument("--google_cred", required=True, help="Path to google credentials file")
     parser.add_argument(
         "--system_cred",
         required=True,

@@ -2,20 +2,19 @@
 """
 Модуль для экспорта таблиц и загрузки на Яндекс.Диск
 """
-import logging.config
-
-logging.config.fileConfig('./logging.conf')
-
 
 import argparse
 import csv
 import logging
+import logging.config
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from base_class import BaseGoogleSpreadsheetDataProcessor
 from utils.download_file import download_sheets
 from utils.yadisk_manager import DiskManager
+
+logging.config.fileConfig('./logging.conf')
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +52,7 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         if control_data:
             control_data = csv.DictReader(
                 control_data,
-                fieldnames=[
-                    "subject",
-                    "table_id",
-                    "sheet_id",
-                    "export_format",
-                    "export_name",
-                    "remove_cols"
-                ],
+                fieldnames=["subject", "table_id", "sheet_id", "export_format", "export_name", "remove_cols"],
             )
             for export_line in control_data:
                 subject = export_line.pop("subject")
@@ -84,12 +76,7 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
             return False
 
     def process_data(
-        self,
-        table_id: str,
-        sheet_id: str,
-        export_name: str,
-        export_format: str,
-        remove_cols: str | None = None
+        self, table_id: str, sheet_id: str, export_name: str, export_format: str, remove_cols: str | None = None
     ) -> str:
         """
         Обрабатывает одну строку управляющей таблицы
@@ -97,7 +84,7 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
         Args: данные строки из таблицы
         """
         sheet_ids = [s.strip() for s in sheet_id.split(';')]
-        
+
         remove_col_idxs = sorted((map(int, remove_cols.split(";"))), reverse=True) if remove_cols else None
 
         content = download_sheets(
@@ -105,19 +92,22 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
             sheet_ids=sheet_ids,
             export_format=export_format,
             google_cred=self.google_cred,
-            remove_cols=remove_col_idxs
+            remove_cols=remove_col_idxs,
         )
 
         if not content:
-            raise Exception(f"download_sheets error")
+            raise Exception("download_sheets error")
 
         with NamedTemporaryFile(suffix=f".{export_format}", delete_on_close=False) as temp_file:
             temp_file.write(content)
             temp_filename = temp_file.name
-            logger.debug(f"Листы {sheet_ids} из таблицы {table_id} сохранены во временный файл для дальнейшей обработки: {temp_filename}")
+            logger.debug(
+                f"Листы {sheet_ids} из таблицы {table_id} сохранены во временный "
+                f"файл для дальнейшей обработки: {temp_filename}"
+            )
             public_link = self.upload_file_to_disk(temp_filename, f"{export_name}.{export_format}")
             if not public_link:
-                raise Exception(f"upload_file_to_disk error")
+                raise Exception("upload_file_to_disk error")
             return public_link
 
     def upload_file_to_disk(self, path_to_file: str, disk_path: str):
@@ -135,19 +125,11 @@ class SpreadheetToYaDiskDuplicator(BaseGoogleSpreadsheetDataProcessor):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Download Admin Google Sheets with duplicate info"
-    )
+    parser = argparse.ArgumentParser(description="Download Admin Google Sheets with duplicate info")
     parser.add_argument("--table_id", required=True, help="Google Sheets table ID")
-    parser.add_argument(
-        "--sheet_id", required=True, default=0, type=int, help="Sheet ID (default: 0)"
-    )
-    parser.add_argument(
-        "--google_cred", required=True, help="Path to google credentials file"
-    )
-    parser.add_argument(
-        "--yadisk_token", required=True, help="Yadisk token for upload/publish"
-    )
+    parser.add_argument("--sheet_id", required=True, default=0, type=int, help="Sheet ID (default: 0)")
+    parser.add_argument("--google_cred", required=True, help="Path to google credentials file")
+    parser.add_argument("--yadisk_token", required=True, help="Yadisk token for upload/publish")
     parser.add_argument(
         "--yadisk_dir",
         required=True,

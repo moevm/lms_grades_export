@@ -1,11 +1,9 @@
 """Script with DiskManager class and functions for moodle backup"""
 
-from datetime import datetime
-from os import environ, path
 from logging import getLogger
+from os import environ, path
 
 import yadisk
-
 
 logger = getLogger(__name__)
 

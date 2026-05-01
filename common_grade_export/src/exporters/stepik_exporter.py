@@ -4,7 +4,6 @@ import json
 
 import requests
 import yadisk
-
 from utils.arg_parser import arg_parser_stepik
 from utils.gspread import write_data_to_table_stepik
 
@@ -14,9 +13,7 @@ ALL_TASK_IDS = set()
 # check status code and if request is valid
 def check_access(response):
     if response.status_code != 200:
-        raise SystemExit(
-            "Request error, response status code: " + str(response.status_code)
-        )
+        raise SystemExit("Request error, response status code: " + str(response.status_code))
 
     data = json.loads(response.text)
 
@@ -94,16 +91,12 @@ def main():
         exit(1)
     else:
         # logger.debug('********************************************************')
-        print(f"stepik_export: Authorization valid")
+        print("stepik_export: Authorization valid")
 
     # get grades data
     if args.class_id:
         grades_meta = requests.get(
-            args.url
-            + "/course-grades?course="
-            + args.course_id
-            + "&klass="
-            + args.class_id,
+            args.url + "/course-grades?course=" + args.course_id + "&klass=" + args.class_id,
             headers={"Authorization": "Bearer " + token},
         )
         course_grades = check_access(grades_meta)
@@ -140,11 +133,7 @@ def main():
                     )
                 else:
                     grades_meta = requests.get(
-                        args.url
-                        + "/course-grades?course="
-                        + args.course_id
-                        + "&page="
-                        + str(page),
+                        args.url + "/course-grades?course=" + args.course_id + "&page=" + str(page),
                         headers={"Authorization": "Bearer " + token},
                     )
                 course_grades = check_access(grades_meta)
@@ -160,9 +149,7 @@ def main():
     csv_path = args.csv_path + "_" + args.course_id + ".csv"
     with open(csv_path, "w", encoding="UTF8", newline="") as f:
         global ALL_TASK_IDS
-        fields = ["user id", "full name", "last viewed", "total score"] + list(
-            ALL_TASK_IDS
-        )
+        fields = ["user id", "full name", "last viewed", "total score"] + list(ALL_TASK_IDS)
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(grades_for_table)
@@ -172,18 +159,14 @@ def main():
     if args.google_token and args.table_id:
         # logger.debug('Send data to Google Sheets')
         if args.sheet_id:
-            write_data_to_table_stepik(
-                csv_path, args.google_token, args.table_id, sheet_id=args.sheet_id
-            )
+            write_data_to_table_stepik(csv_path, args.google_token, args.table_id, sheet_id=args.sheet_id)
             print(f"Check data in your table! List id is: {args.sheet_id}")
         else:
             if args.sheet_name:
                 sheet_name = args.sheet_name
             else:
                 sheet_name = "course " + args.course_id
-            write_data_to_table_stepik(
-                csv_path, args.google_token, args.table_id, sheet_name=sheet_name
-            )
+            write_data_to_table_stepik(csv_path, args.google_token, args.table_id, sheet_name=sheet_name)
             # logger.info(f'Check data in your table! List name is: {sheet_name}')
         # logger.debug('********************************************************')
 
@@ -195,7 +178,7 @@ def main():
             client.upload(csv_path, yandex_path)
             # logger.info(f'Check data in your disk! Path to the table is: {yandex_path}')
             # logger.debug('********************************************************')
-        except Exception as e:
+        except Exception:
             # logger.error(f'Saving data to Yandex Disk failed. Error message: {e}')
             exit(1)
 
