@@ -2,10 +2,9 @@ import json
 
 
 class Config:
-
     def __init__(self, data):
         self.__dict__.update(data)
-    
+
     def get(self, attr_name):
         if attr_name in self.__dict__:
             return self.__dict__[attr_name]

@@ -60,8 +60,6 @@ class Main:
 
                     # print(activity_name)
 
-
-
                     person_grades["activities"].append(
                         {
                             "activity_name": activity_name,

@@ -1,13 +1,11 @@
-import os
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import requests
 import yadisk
-from tqdm import tqdm
-
 from args_parser import arg_parser
+from tqdm import tqdm
 
 
 def get_access_token(client_id, client_secret):
@@ -84,9 +82,7 @@ def get_step_ids(data):
 
 
 def get_info(access_token, course_id, class_id):
-    data = get_grade_list(
-        access_token=access_token, course_id=course_id, class_id=class_id
-    )
+    data = get_grade_list(access_token=access_token, course_id=course_id, class_id=class_id)
     step_ids = get_step_ids(data)
 
     is_read = {}
@@ -151,9 +147,8 @@ def postprocess_df(df):
     uniq_dates = new_df.apply(lambda item: len(np.unique(item[3:])), axis=1)
     days = new_df.apply(
         lambda item: (
-            datetime.strptime(np.max(item[3:]), "%Y-%m-%d")
-            - datetime.strptime(np.min(item[3:]), "%Y-%m-%d")
-        ).days,
+            (datetime.strptime(np.max(item[3:]), "%Y-%m-%d") - datetime.strptime(np.min(item[3:]), "%Y-%m-%d")).days
+        ),
         axis=1,
     )
     new_df["uniq_dates"] = uniq_dates
@@ -174,6 +169,7 @@ def postprocess_df(df):
 
     return new_df
 
+
 def load_to_yandex_disk(csv_path, dest_path, token):
     try:
         client = yadisk.YaDisk(token=token)
@@ -182,6 +178,7 @@ def load_to_yandex_disk(csv_path, dest_path, token):
     except Exception as e:
         print(f'Saving data to Yandex Disk failed. Error message: {e}')
         return
+
 
 if __name__ == "__main__":
     args = arg_parser()

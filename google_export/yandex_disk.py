@@ -1,19 +1,17 @@
 """Script with DiskManager class and functions for moodle backup
 duplicate moodle_export/*
 """
-from datetime import datetime
-from os import environ, path
+
 from logging import getLogger
+from os import environ, path
 
 import yadisk
-
 
 logger = getLogger()
 
 
-class DiskManager():
-    """Light YaDisk manager
-    """
+class DiskManager:
+    """Light YaDisk manager"""
 
     def __init__(self, yatoken, download_path='./'):
         self.client = yadisk.Client(token=yatoken or environ.get('YADISK_TOKEN'))

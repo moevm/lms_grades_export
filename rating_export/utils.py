@@ -1,9 +1,8 @@
-import gspread
-import re
 import hashlib
-from google.oauth2.service_account import Credentials
-from datetime import datetime
+import re
 
+import gspread
+from google.oauth2.service_account import Credentials
 
 # =================================== Блок работы с хэшем ===================================
 
@@ -85,9 +84,7 @@ def parse_column_specifier(column_spec, headers):
             return column_letter_to_index(column_spec.upper())
 
         raise ValueError(f"Колонка '{column_spec}' не найдена в {headers}")
-    raise ValueError(
-        f"Неподдерживаемый формат ({type(column_spec)}) колонки '{column_spec}'"
-    )
+    raise ValueError(f"Неподдерживаемый формат ({type(column_spec)}) колонки '{column_spec}'")
 
 
 def column_letter_to_index(column_letter):
