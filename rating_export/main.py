@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import logging
 import os
 from datetime import datetime
+
 import utils
-import logging
 from config import Config
-from manage_files import create_student_directories
 from html_templates import generate_from_base_html
+from manage_files import create_student_directories
 
 logger = logging.getLogger("root")
 
 if os.environ.get("LOG_FILE"):
-    logging.basicConfig(
-        level=logging.INFO,
-        filename=os.environ.get("LOG_FILE"),
-        filemode="w"
-    )
+    logging.basicConfig(level=logging.INFO, filename=os.environ.get("LOG_FILE"), filemode="w")
 else:
     logging.basicConfig(level=logging.INFO)
 
@@ -28,9 +25,7 @@ class StudentRatingsToDokuWiki:
     def export_tables(self):
         for table_info in self.config.export:
             students_data = self.export_selected_columns(**table_info.__dict__)
-            create_student_directories(
-                students_data, base_directory=table_info.outdir_path
-            )
+            create_student_directories(students_data, base_directory=table_info.outdir_path)
 
             # Генерируем индексную страницу и страницу обновления
             self.generate_index_page(students_data, table_info.outdir_path)
@@ -47,9 +42,7 @@ class StudentRatingsToDokuWiki:
         outdir_path,
         header_row=0,
     ):
-        logger.info(
-            f"Старт обработки предмета '{subject}', таблица '{spreadsheet_key}', лист '{worksheet_name}'"
-        )
+        logger.info(f"Старт обработки предмета '{subject}', таблица '{spreadsheet_key}', лист '{worksheet_name}'")
         worksheet = utils.get_worksheet(self.client, spreadsheet_key, worksheet_name)
         # TODO: get диапазона вместо get_all_values http://docs.gspread.org/en/latest/api/models/worksheet.html#gspread.worksheet.Worksheet.get
         data = worksheet.get_all_values()
@@ -76,7 +69,7 @@ class StudentRatingsToDokuWiki:
 
         students_data = []
 
-        for row in data[header_row+1:]:
+        for row in data[header_row + 1 :]:
             if not row or not row[name_col] or not row[login_col] or not row[group_col]:
                 continue
 
@@ -98,7 +91,8 @@ class StudentRatingsToDokuWiki:
 
             # Генерируем страницу
             logger.info(
-                f"\tСоздание страницы студента '{student_name}', группа '{student_group}', логин '{student_login}', ID '{hash_login}'"
+                f"\tСоздание страницы студента '{student_name}', группа '{student_group}', "
+                f"логин '{student_login}', ID '{hash_login}'"
             )
             filepath = self.generate_student_page(
                 student_name,
@@ -140,7 +134,6 @@ class StudentRatingsToDokuWiki:
         <h1>🎓 {student_name}</h1>
         <p>Персональная страница студента по дисциплине {subject}</p>
     </div>
-    
     <div class="content">
         <div class="card">
             <h2>📋 Основная информация</h2>
@@ -159,10 +152,8 @@ class StudentRatingsToDokuWiki:
                 </div>
             </div>
         </div>
-        
         <div class="card">
             <h2>⭐ Рейтинг</h2>
-            
             <table>
                 <tr>
                     <th>Компонент</th>
@@ -170,7 +161,7 @@ class StudentRatingsToDokuWiki:
                 </tr>
     """
 
-        for component, text in zip(published_headers, row_data):
+        for component, text in zip(published_headers, row_data, strict=False):
             display_component = utils.clean_cell_content(component)
             score_display = text
             html_content += f"""
@@ -183,7 +174,6 @@ class StudentRatingsToDokuWiki:
         html_content += """
             </table>
         </div>
-        
         <div style="text-align: center; margin: 30px 0;">
             <a href="./index.html" class="btn">📁 Мои рейтинги</a>
         </div>
@@ -200,15 +190,9 @@ class StudentRatingsToDokuWiki:
         filepath = os.path.join(namespace_path, filename)
 
         with open(filepath, "w", encoding="utf-8") as f:
-            f.write(
-                generate_from_base_html(
-                    f"{student_name} - Рейтинг - {subject}", html_content
-                )
-            )
+            f.write(generate_from_base_html(f"{student_name} - Рейтинг - {subject}", html_content))
 
-        logger.info(
-            f"\t\tСоздана страница студента {student_name} для предмета {subject} (путь: {filepath})"
-        )
+        logger.info(f"\t\tСоздана страница студента {student_name} для предмета {subject} (путь: {filepath})")
 
         return filepath
 
@@ -217,7 +201,7 @@ class StudentRatingsToDokuWiki:
 
         # Сортируем студентов по группе и имени
         sorted_students = sorted(students_data, key=lambda x: (x["group"], x["name"]))
-        
+
         content = """
         <div class="header">
             <h1>Страницы студенческих рейтингов</h1>
@@ -233,14 +217,14 @@ class StudentRatingsToDokuWiki:
                 </thead>
                 <tbody>
         """
-        
+
         for i, student_data in enumerate(sorted_students, 1):
             student_name = student_data["name"]
             hash_login = student_data["hash"]
             group = student_data["group"]
-            
+
             student_link = f"{hash_login}/index.html"
-            
+
             content += f"""
                     <tr>
                         <td class="number">{i}</td>
@@ -250,11 +234,10 @@ class StudentRatingsToDokuWiki:
                         <td class="group">{group}</td>
                     </tr>
             """
-        
+
         content += """
                 </tbody>
             </table>
-            
             <div class="statistics">
                 <h3>Статистика</h3>
                 <p>Всего студентов: {total_students}</p>

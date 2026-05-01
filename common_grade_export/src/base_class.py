@@ -1,8 +1,7 @@
 import logging
-import sys
 from io import StringIO
-from utils.download_file import download_sheets, get_sheets_service_and_token
 
+from utils.download_file import download_sheets, get_sheets_service_and_token
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +36,7 @@ class BaseGoogleSpreadsheetDataProcessor:
         Получает данные из управляющей таблицы
         """
         content = download_sheets(
-            table_id=self.table_id,
-            sheet_ids=[self.sheet_id],
-            google_cred=self.google_cred,
-            export_format="csv"
+            table_id=self.table_id, sheet_ids=[self.sheet_id], google_cred=self.google_cred, export_format="csv"
         )
 
         if content:
@@ -68,9 +64,7 @@ class BaseGoogleSpreadsheetDataProcessor:
         """
         raise NotImplementedError()
 
-    def write_process_result(
-        self, table_range="A1", rows=100, cols=2, prefix="result_"
-    ):
+    def write_process_result(self, table_range="A1", rows=100, cols=2, prefix="result_"):
         """
         Записывает результаты обработки в управляющую таблицу в table_range (по умолчанию A1), очищая старые данные.
         rows, cols используются для создания нового листа, в случае его отсутствия
@@ -90,7 +84,7 @@ class BaseGoogleSpreadsheetDataProcessor:
         try:
             ws = sh.worksheet(sheet_title)
             ws.clear()
-        except:
+        except Exception:
             ws = sh.add_worksheet(title=sheet_title, rows=rows, cols=cols)
 
         ws.append_rows(self.results, table_range=table_range)

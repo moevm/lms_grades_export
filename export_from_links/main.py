@@ -1,15 +1,15 @@
 import argparse
 import datetime
-import os
-import typing
 import logging
+import os
+import re
+import typing
+from urllib.parse import urlencode
 
+import filetype
 import requests
 import yadisk
 from bs4 import BeautifulSoup
-import re
-from urllib.parse import urlencode
-import filetype
 
 GOOGLE_DRIVE_URL = 'https://drive.google.com'
 GOOGLE_DOCS_URL = 'https://docs.google.com'
@@ -38,6 +38,7 @@ overwritten_files_count = 0
 empty_url_count = 0
 failed_filetype_determination_count = 0
 current_prefix = None
+
 
 def get_data_from_google_spreadsheet(url) -> typing.List[typing.List[str]]:
     if 'edit' in url:
@@ -138,6 +139,7 @@ def get_file_content_from_google_docs(url):
     download_logger.info(f"Successfully accessed file at {url}")
     return final_response
 
+
 def get_file_content_from_yandex_disk(url):
     global failed_download_count
     base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
@@ -177,6 +179,7 @@ def save_response_content(response, destination):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
 
+
 def process_url(url):
     global failed_download_count
     download_logger.info(f"Processing {url}")
@@ -196,8 +199,15 @@ def process_url(url):
     failed_download_count = failed_download_count + 1
     return None
 
+
 def download_files(rows, prefix_column_index, download_column_index, download_column_name):
-    global empty_url_count, successful_download_count, link_count, failed_filetype_determination_count, current_prefix, overwritten_files_count
+    global \
+        empty_url_count, \
+        successful_download_count, \
+        link_count, \
+        failed_filetype_determination_count, \
+        current_prefix, \
+        overwritten_files_count
     rows.pop(0)
     download_logger.info("Starting to download files from urls")
     for row in rows:
@@ -238,7 +248,8 @@ def download_files(rows, prefix_column_index, download_column_index, download_co
 
 def main():
     parser = argparse.ArgumentParser(
-        description="A script for downloading files from links in a column in Google spreadsheet")
+        description="A script for downloading files from links in a column in Google spreadsheet"
+    )
     parser.add_argument('--table_link', required=True)
     parser.add_argument('--credentials', required=True)
     parser.add_argument('--prefix_column_name', required=True)
@@ -287,7 +298,6 @@ def main():
     report_logger.info(f"Empty cells in download column: {empty_url_count}")
     report_logger.info(f"Failed filetype determinations: {failed_filetype_determination_count}")
     report_logger.info("---------------------------------------------------------")
-
 
     client = yadisk.Client(token=args.credentials)
     successful_upload_count = 0

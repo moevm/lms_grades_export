@@ -1,8 +1,8 @@
-import os
 import glob
-from html_templates import generate_from_base_html
 import logging
+import os
 
+from html_templates import generate_from_base_html
 
 logger = logging.getLogger("root")
 
@@ -19,9 +19,7 @@ def generate_student_index_html(student_data, student_directory):
                 filename = os.path.basename(file_path)
                 if filename != "index.html":  # Исключаем сам index.html
                     file_size = os.path.getsize(file_path)
-                    files.append(
-                        {"name": filename, "size": file_size, "path": filename}
-                    )
+                    files.append({"name": filename, "size": file_size, "path": filename})
 
     # Сортируем файлы по имени
     files.sort(key=lambda x: x["name"])
@@ -66,7 +64,7 @@ def generate_student_index_html(student_data, student_directory):
             html_content += f"""
                 <tr>
                     <td>
-                        <a href="{file_info['path']}" class="file-link">{file_info['name'].rsplit('.', 1)[0]}</a>                        
+                        <a href="{file_info['path']}" class="file-link">{file_info['name'].rsplit('.', 1)[0]}</a>
                     </td>
                 </tr>
             """
@@ -96,9 +94,7 @@ def generate_student_index_html(student_data, student_directory):
 </html>
 """
 
-    return generate_from_base_html(
-        f"{student_data['name']} - Рейтинги дисциплин студента", html_content
-    )
+    return generate_from_base_html(f"{student_data['name']} - Рейтинги дисциплин студента", html_content)
 
 
 def get_current_time():

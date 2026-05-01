@@ -1,61 +1,23 @@
 # /bin/python3
-import csv
-from io import StringIO
+import logging
+import logging.config
 
-import pandas as pd
 import requests
-
-from utils.download_file import get_sheets_service_and_token
+from exporters.base_exporter import BaseExporter
 from utils.arg_parser import arg_parser_wst
 
-
+logging.config.fileConfig('./logging.conf')
+logger = logging.getLogger("dis_exporter")
 
 EXPORT_URL = "http://speech-trainer.moevm.info/api/trainings/csv?count=1000&"
 
 
-def load_data_from_wst(wst_filter, wst_token):
-    url = fr"{EXPORT_URL}&{wst_filter}&TOKEN={wst_token}"
-    csv_data = StringIO(requests.get(url).content.decode("utf-8"))
-
-    df = pd.read_csv(csv_data)
-    csv_data.seek(0)
-
-    df_data = pd.DataFrame(df.to_dict("records"))
-
-    return csv_data, df_data
-
-
-def write_data_to_table(
-    wst_token,
-    wst_filter,
-    google_token,
-    table_id,
-    sheet_id,
-    start_cell="A1"
-):
-    csv_data, _ = load_data_from_wst(wst_filter, wst_token)
-
-    if google_token and sheet_id and table_id:
-        gc, _ = get_sheets_service_and_token(google_token)
-        sh = gc.open_by_key(table_id)
-
-        wk_content = sh.get_worksheet_by_id(sheet_id)
-        reader = csv.reader(csv_data)
-        wk_content.update(values=[i for i in reader], range_name=start_cell)
-        print(f"WST data's writed to {table_id} {sheet_id}")
-
-
-def main():
-    args = arg_parser_wst()
-    write_data_to_table(
-        wst_token=args.wst_token,
-        wst_filter=args.wst_filter,
-        google_token=args.google_token,
-        table_id=args.table_id,
-        sheet_id=args.sheet_id,
-        start_cell=args.start_cell
-    )
+class WSTExporter(BaseExporter):
+    def download_data(self) -> str:
+        url = rf"{EXPORT_URL}&{self.args.wst_filter}&TOKEN={self.args.wst_token}"
+        return requests.get(url).content.decode("utf-8")
 
 
 if __name__ == "__main__":
-    main()
+    args = arg_parser_wst()
+    WSTExporter(args=args, logger=logger).run()

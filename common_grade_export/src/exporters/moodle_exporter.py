@@ -2,9 +2,9 @@
 import datetime
 import json
 import re
+
 import requests
 from pandas import DataFrame
-
 from utils.arg_parser import arg_parser_moodle
 from utils.gspread import write_data_to_table
 
@@ -19,6 +19,9 @@ class Main:
 
     @classmethod
     def parse_person_table(cls, data, users_params):
+        def to_float_from_comma(x):
+            return float(x.replace(",", ".")) if x != "-" else "-"
+
         grades_data = []
         for person in data:
             user_id = person["userid"]
@@ -35,7 +38,7 @@ class Main:
 
             for activity in person["tabledata"]:
                 itemname_key = "itemname"
-                if type(activity) == dict and itemname_key in activity:
+                if isinstance(activity, dict) and itemname_key in activity:
                     item_classes = set(activity[itemname_key].get("class").split(" "))
 
                     # if item has skipped class -> go to next item
@@ -45,9 +48,9 @@ class Main:
                     # if item has class 'leve1' -> it's Course total (we hope)
                     if cls.level1_class not in item_classes:
                         activity_name_raw_content = activity[itemname_key]["content"]  # html
-                        activity_name = activity_name_raw_content.rpartition("</a>")[0].rsplit('">')[-1]    # name
+                        activity_name = activity_name_raw_content.rpartition("</a>")[0].rsplit('">')[-1]  # name
                         activity_id = re.search(r"grade\.php\?id=(\d+)", activity_name_raw_content)
-                        activity_id = activity_id.group(1) if activity_id else None     # id
+                        activity_id = activity_id.group(1) if activity_id else None  # id
                         activity["grade"]["content"] = activity["grade"]["content"].rsplit(">", 1)[-1]
                     else:
                         activity_name = "total"
@@ -57,23 +60,13 @@ class Main:
 
                     # print(activity_name)
 
-                    to_float_from_comma = lambda x: (
-                        float(x.replace(",", ".")) if x != "-" else "-"
-                    )
-
                     person_grades["activities"].append(
                         {
                             "activity_name": activity_name,
                             "activity_id": activity_id,
                             "grade": activity["grade"]["content"],
-                            "percentage": to_float_from_comma(
-                                activity["percentage"]["content"].split(" ")[0]
-                            ),
-                            "contributiontocoursetotal": activity[
-                                "contributiontocoursetotal"
-                            ][
-                                "content"
-                            ],  # ????
+                            "percentage": to_float_from_comma(activity["percentage"]["content"].split(" ")[0]),
+                            "contributiontocoursetotal": activity["contributiontocoursetotal"]["content"],  # ????
                         }
                     )
 
@@ -94,30 +87,25 @@ class Main:
                 )
                 # check status code
                 if res_users.status_code != 200:
-                    raise SystemExit(
-                        "Request error, response status code: "
-                        + str(res_users.status_code)
-                    )
+                    raise SystemExit("Request error, response status code: " + str(res_users.status_code))
 
                 users = json.loads(res_users.text)
                 # check if request is valid
-                if type(users) != list:
+                if not isinstance(users, list):
                     raise SystemExit("Error: " + users["message"])
 
                 # save last accessed time for each user
                 users_params = {}
                 for item in users:
                     users_params[str(item["id"])] = {
-                        "last_access": datetime.datetime.fromtimestamp(
-                            item["lastcourseaccess"]
-                        ).strftime("%Y-%m-%d %H:%M:%S"),
+                        "last_access": datetime.datetime.fromtimestamp(item["lastcourseaccess"]).strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
                         "username": item.get("username", "-"),
                         "email": item.get("email", "-"),
                     }
                     users_params[str(item["id"])]["github"] = (
-                        item["customfields"][0].get("value", "-")
-                        if "customfields" in item
-                        else "-"
+                        item["customfields"][0].get("value", "-") if "customfields" in item else "-"
                     )
 
                 # get grades
@@ -129,10 +117,7 @@ class Main:
 
                 # check status code
                 if res_grades.status_code != 200:
-                    raise SystemExit(
-                        "Request error, response status code: "
-                        + str(res_grades.status_code)
-                    )
+                    raise SystemExit("Request error, response status code: " + str(res_grades.status_code))
 
                 grades = json.loads(res_grades.text)
 
@@ -178,7 +163,6 @@ class Main:
 
                 # if cls.args specified write data to sheets document
                 if cls.args.google_token and cls.args.table_id:
-
                     for i in range(0, len(cls.args.table_id)):
                         if cls.args.course_id[i] == course_id:
                             table_id = cls.args.table_id[i]
@@ -201,14 +185,10 @@ class Main:
                                     sheet_name = cls.args.sheet_name[i]
                                     break
                                 else:
-                                    sheet_name = (
-                                        cls.args.sheet_name[i] + " " + course_id
-                                    )
+                                    sheet_name = cls.args.sheet_name[i] + " " + course_id
                         else:
                             sheet_name = "course " + course_id
-                        write_data_to_table(
-                            df, cls.args.google_token, table_id, sheet_name=sheet_name
-                        )
+                        write_data_to_table(df, cls.args.google_token, table_id, sheet_name=sheet_name)
                 print(f"End exporting for course_id={course_id}")
 
                 # write data to yandex disk
@@ -224,9 +204,7 @@ class Main:
                     )
 
                     yandex_path = cls.args.yandex_path
-                    print(
-                        f"Course {cls.args.course_id} uploaded to table on Disk! Path to the table is: {yandex_path}"
-                    )
+                    print(f"Course {cls.args.course_id} uploaded to table on Disk! Path to the table is: {yandex_path}")
 
 
 if __name__ == "__main__":
