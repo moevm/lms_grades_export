@@ -9,7 +9,7 @@ from utils.arg_parser import arg_parser_wst
 logging.config.fileConfig('./logging.conf')
 logger = logging.getLogger("dis_exporter")
 
-EXPORT_URL = "http://speech-trainer.moevm.info/api/trainings/csv?count=1000&"
+EXPORT_URL = "http://speech-trainer.moevm.pro/api/trainings/csv?count=1000&"
 
 
 class WSTExporter(BaseExporter):

@@ -132,7 +132,7 @@ class CourseToSpreadsheetExporter(BaseGoogleSpreadsheetDataProcessor):
                 "--moodle_token",
                 self.system_cred["moodle"],
                 "--url",
-                "https://e.moevm.info",
+                "https://e.moevm.pro",
                 "--csv_path",
                 "grades",
                 "--course_id",

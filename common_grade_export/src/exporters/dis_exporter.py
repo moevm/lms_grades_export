@@ -9,7 +9,7 @@ from utils.arg_parser import arg_parser_dis
 logging.config.fileConfig('./logging.conf')
 logger = logging.getLogger("dis_exporter")
 
-EXPORT_URL = "https://slides-checker.moevm.info/get_csv/?limit=0&offset=0&sort=&order="
+EXPORT_URL = "https://slides-checker.moevm.pro/get_csv/?limit=0&offset=0&sort=&order="
 
 
 class DISExporter(BaseExporter):
