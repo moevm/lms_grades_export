@@ -5,7 +5,7 @@
 docker build -t 'grade_exporter:latest' .
 
 
-SYSTEM_CRED=/tmp/system_cred.json
+SYSTEM_CRED=./system_cred.json
 
 cat > $SYSTEM_CRED <<EOF
 {
