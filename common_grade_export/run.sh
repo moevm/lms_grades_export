@@ -25,6 +25,6 @@ SHEET_ID=$SHEET_ID
 GOOGLE_CRED=$EXPORTER_GOOGLE_CONF
 
 GOOGLE_CRED_DOCKER_PATH=/app/secret.json
-CRED_DOCKER_PATH=/app/system_cred.json
+CRED_DOCKER_PATH=/tmp/system_cred.json
 
 docker run --rm -v $GOOGLE_CRED:$GOOGLE_CRED_DOCKER_PATH -v $SYSTEM_CRED:$CRED_DOCKER_PATH grade_exporter:latest course_to_spreadsheet_exporter.py --table_id $TABLE_ID --sheet_id $SHEET_ID --google_cred $GOOGLE_CRED_DOCKER_PATH --system_cred $CRED_DOCKER_PATH
