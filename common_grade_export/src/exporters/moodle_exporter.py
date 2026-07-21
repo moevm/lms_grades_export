@@ -4,6 +4,7 @@ import json
 import re
 
 import requests
+from bs4 import BeautifulSoup
 from pandas import DataFrame
 from utils.arg_parser import arg_parser_moodle
 from utils.gspread import write_data_to_table
@@ -16,6 +17,23 @@ class Main:
     skip_item_classes = {"category"}
     item_class = "column-itemname"
     level1_class = "level1"
+
+    @staticmethod
+    def extract_grade_from_html(html_content):
+        if not html_content or html_content == "-":
+            return "-"
+        try:
+            soup = BeautifulSoup(html_content, "html.parser")
+            text = soup.get_text(separator=" ", strip=True)
+            matches = re.findall(r'\d+,\d+', text)
+            if matches:
+                return matches[0]
+            matches_int = re.findall(r'\d+', text)
+            if matches_int:
+                return matches_int[0] + ",0"
+            return "-"
+        except Exception:
+            return "-"
 
     @classmethod
     def parse_person_table(cls, data, users_params):
@@ -34,41 +52,58 @@ class Main:
             if cls.args.options and "github" in cls.args.options:
                 person_grades["github"] = users_params[str(user_id)]["github"]
 
-            # print(f'userid: {user_id} fullname: {person_grades["userfullname"]}')
+            for row in person["tabledata"]:
+                if "leader" in row:
+                    continue
+                if "itemname" not in row:
+                    continue
 
-            for activity in person["tabledata"]:
-                itemname_key = "itemname"
-                if isinstance(activity, dict) and itemname_key in activity:
-                    item_classes = set(activity[itemname_key].get("class").split(" "))
+                item = row["itemname"]
+                classes = set(item.get("class", "").split())
 
-                    # if item has skipped class -> go to next item
-                    if cls.skip_item_classes & item_classes:
-                        continue
+                if cls.skip_item_classes & classes:
+                    continue
+
+                is_total = cls.level1_class in classes  # level1
+
+                if is_total:
+                    activity_name = "total"
                     activity_id = None
-                    # if item has class 'leve1' -> it's Course total (we hope)
-                    if cls.level1_class not in item_classes:
-                        activity_name_raw_content = activity[itemname_key]["content"]  # html
-                        activity_name = activity_name_raw_content.rpartition("</a>")[0].rsplit('">')[-1]  # name
-                        activity_id = re.search(r"grade\.php\?id=(\d+)", activity_name_raw_content)
-                        activity_id = activity_id.group(1) if activity_id else None  # id
-                        activity["grade"]["content"] = activity["grade"]["content"].rsplit(">", 1)[-1]
+                    grade_content = row["grade"]["content"]
+                    if grade_content == "-":
+                        grade_content = "0,0"
+                        row["percentage"]["content"] = "0,0 %"
+                    grade = cls.extract_grade_from_html(row["grade"]["content"])
+                    percentage = to_float_from_comma(row["percentage"]["content"].split(" ")[0])
+                    contribution = row["contributiontocoursetotal"]["content"]
+                else:
+                    html_content = item["content"]
+                    soup = BeautifulSoup(html_content, "html.parser")
+
+                    link = soup.find("a", class_="gradeitemheader")
+                    if link:
+                        activity_name = link.get_text(strip=True)
+                        href = link.get("href", "")
+                        match = re.search(r"[?&]id=(\d+)", href)
+                        activity_id = match.group(1) if match else None
                     else:
-                        activity_name = "total"
-                        if activity["grade"]["content"] == "-":
-                            activity["grade"]["content"] = "0,0"  # issue #13
-                        activity["percentage"]["content"] = "0,0 %"
+                        title_span = soup.find("span", class_="rowtitle")
+                        activity_name = title_span.get_text(strip=True) if title_span else soup.get_text(strip=True)
+                        activity_id = None
 
-                    # print(activity_name)
+                    grade = cls.extract_grade_from_html(row["grade"]["content"])
+                    percentage = to_float_from_comma(row["percentage"]["content"].split(" ")[0])
+                    contribution = row["contributiontocoursetotal"]["content"]
 
-                    person_grades["activities"].append(
-                        {
-                            "activity_name": activity_name,
-                            "activity_id": activity_id,
-                            "grade": activity["grade"]["content"],
-                            "percentage": to_float_from_comma(activity["percentage"]["content"].split(" ")[0]),
-                            "contributiontocoursetotal": activity["contributiontocoursetotal"]["content"],  # ????
-                        }
-                    )
+                person_grades["activities"].append(
+                    {
+                        "activity_name": activity_name,
+                        "activity_id": activity_id,
+                        "grade": grade,
+                        "percentage": percentage,
+                        "contributiontocoursetotal": contribution,
+                    }
+                )
 
             grades_data.append(person_grades)
 
