@@ -38,8 +38,11 @@ class Main:
     @classmethod
     def parse_person_table(cls, data, users_params):
         def to_float_from_comma(x):
-            return float(x.replace(",", ".")) if x != "-" else "-"
-
+            try:
+                return float(x.replace(",", "."))
+            except:
+                return '-'
+        
         grades_data = []
         for person in data:
             user_id = person["userid"]
