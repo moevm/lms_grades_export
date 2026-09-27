@@ -87,7 +87,7 @@ def generate_student_index_html(student_data, student_directory):
         </div>
     </div></div>
         <div class="footer">
-        <p>© 2025 Кафедра МОЭВМ | Автоматизированная система рейтинга</p>
+        <p>© 2025-2026 Кафедра МОЭВМ | Автоматизированная система рейтинга</p>
     </div>
     </div>
 </body>

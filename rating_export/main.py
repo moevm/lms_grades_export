@@ -179,7 +179,7 @@ class StudentRatingsToDokuWiki:
         </div>
     </div>
     <div class="footer">
-        <p>© 2025 Кафедра МОЭВМ | Автоматизированная система рейтинга</p>
+        <p>© 2025-2026 Кафедра МОЭВМ | Автоматизированная система рейтинга</p>
     </div>"""
 
         # У каждого студента своя папка, в которой страницы под каждый предмет
@@ -246,7 +246,7 @@ class StudentRatingsToDokuWiki:
         """.format(total_students=len(students_data))
 
         # Сохраняем индексную страницу
-        index_path = os.path.join(output_dir, "moevm_all_student_secret_page_2025.html")
+        index_path = os.path.join(output_dir, "moevm_all_student_secret_page.html")
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(generate_from_base_html('Все студенты каф. МОЭВМ', content))
 
